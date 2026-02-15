@@ -33,7 +33,7 @@ class Schedule(Base):
     duracao = Column(Integer, default=10)  # em segundos (para imagens/textos)
     dias_semana = Column(String(50), default="0,1,2,3,4,5,6")  # 0=domingo, 6=sábado
     prioridade = Column(Integer, default=1)
-    regiao = Column(Integer, nullable=False)  # 1=video, 2=foto, 3=clima, 4=texto
+    regiao = Column(Integer, nullable=False)  # 1=video, 2=imagem, 3=clima, 4=texto
     
     ativo = Column(Boolean, default=True)
     criado_em = Column(DateTime, default=datetime.utcnow)

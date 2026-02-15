@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/schedule", tags=["schedule"])
 
 class ScheduleCreate(BaseModel):
     media_id: int
-    regiao: int  # 1=video, 2=foto, 4=texto
+    regiao: int  # 1=video, 2=imagem, 4=texto
     data_inicio: date
     data_fim: date
     hora_inicio: time

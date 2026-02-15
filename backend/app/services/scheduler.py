@@ -20,7 +20,7 @@ class SchedulerService:
         
         result = {
             "video": None,      # Região 1
-            "foto": None,       # Região 2
+            "imagem": None,       # Região 2
             "texto": None,      # Região 4
             "timestamp": now.isoformat()
         }
@@ -34,7 +34,7 @@ class SchedulerService:
             if regiao == 1:
                 result["video"] = content
             elif regiao == 2:
-                result["foto"] = content
+                result["imagem"] = content
             elif regiao == 4:
                 result["texto"] = content
         
