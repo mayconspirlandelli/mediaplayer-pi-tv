@@ -1,6 +1,6 @@
 export default function ScheduleList({ schedules, onDelete, onEdit }) {
   const getRegiaoNome = (regiao) => {
-    return regiao === 1 ? 'Vídeo' : regiao === 2 ? 'Foto' : 'Texto';
+    return regiao === 1 ? 'Vídeo' : regiao === 2 ? 'Imagem' : 'Texto';
   };
 
   return (

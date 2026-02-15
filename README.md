@@ -46,7 +46,7 @@ mediaplayer-pi/
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  REGIÃO 1: Vídeos Verticais  │  REGIÃO 2: Fotos         │
+│  REGIÃO 1: Vídeos Verticais  │  REGIÃO 2: Imagens         │
 │  (1080x1080)                  │  (840x980)               │
 │                               │                           │
 │                               │  REGIÃO 3: Clima          │

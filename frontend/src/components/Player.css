@@ -44,7 +44,7 @@
   height: 1080px;
 }
 
-/* REGIÃO 2: Fotos (direita superior) */
+/* REGIÃO 2: Imagens (direita superior) */
 .region-photo {
   grid-column: 2;
   grid-row: 1;

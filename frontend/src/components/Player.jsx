@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import VideoRegion from './VideoRegion';
 import PhotoRegion from './PhotoRegion';
-import WeatherRegion from './WeatherRegion';
-import TextRegion from './TextRegion';
 import './Player.css';
+import TextRegion from './TextRegion';
+import VideoRegion from './VideoRegion';
+import WeatherRegion from './WeatherRegion';
 
 export default function Player() {
   const [content, setContent] = useState(null);
@@ -52,9 +52,9 @@ export default function Player() {
           <VideoRegion content={content?.video} />
         </div>
 
-        {/* REGIÃO 2: Fotos */}
+        {/* REGIÃO 2: Imagens */}
         <div className="region region-photo">
-          <PhotoRegion content={content?.foto} />
+          <PhotoRegion content={content?.imagem} />
         </div>
 
         {/* REGIÃO 3: Clima */}

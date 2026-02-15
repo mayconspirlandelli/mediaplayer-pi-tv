@@ -64,7 +64,7 @@ Abra no navegador:
 ### Regiões do Layout
 
 - **Região 1 (Vídeo)**: Lado esquerdo, vídeos verticais 1080x1080
-- **Região 2 (Foto)**: Topo direito, imagens 840x980
+- **Região 2 (Imagem)**: Topo direito, imagens 840x980
 - **Região 3 (Clima)**: Automático (não precisa upload)
 - **Região 4 (Texto)**: Embaixo, avisos em texto (DESABILITADA no layout atual)
 

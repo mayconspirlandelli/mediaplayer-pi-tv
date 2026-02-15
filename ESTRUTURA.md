@@ -45,7 +45,7 @@ mediaplayer-pi/
 │       │   ├── 📄 Player.css       # Layout fixo 1920x1080
 │       │   ├── 📄 VideoRegion.jsx  # Região 1: Vídeos
 │       │   ├── 📄 VideoRegion.css
-│       │   ├── 📄 PhotoRegion.jsx  # Região 2: Fotos
+│       │   ├── 📄 PhotoRegion.jsx  # Região 2: Imagens
 │       │   ├── 📄 PhotoRegion.css
 │       │   ├── 📄 WeatherRegion.jsx # Região 3: Clima
 │       │   ├── 📄 WeatherRegion.css
@@ -122,7 +122,7 @@ mediaplayer-pi/
             ┌──────────────────────┐
             │   React Player       │
             │   - Região 1: Vídeo  │
-            │   - Região 2: Foto   │
+            │   - Região 2: Imagem   │
             │   - Região 3: Clima  │
             │   - Região 4: Texto  │
             └──────────────────────┘
@@ -263,7 +263,7 @@ pydantic-settings==2.1.0
 │  │                 │                              │  │
 │  │                 │                              │  │
 │  │   REGIÃO 1      │      REGIÃO 2                │  │
-│  │   Vídeos        │      Fotos                   │  │
+│  │   Vídeos        │      Imagens                   │  │
 │  │   1080x980      │      840x980                 │  │
 │  │                 │                              │  │
 │  │                 ├──────────────────────────────┤  │
@@ -276,7 +276,7 @@ pydantic-settings==2.1.0
 
 **Dimensões exatas:**
 - Região 1 (Vídeo): 1080px × 1080px - Esquerda completa
-- Região 2 (Foto): 840px × 980px - Topo direito
+- Região 2 (Imagem): 840px × 980px - Topo direito
 - Região 3 (Clima): 840px × 100px - Embaixo direito
 - Região 4 (Texto): DESABILITADA no layout atual
 

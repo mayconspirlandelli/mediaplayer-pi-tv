@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { useEffect, useState } from 'react';
 import MediaList from '../components/admin/MediaList';
 import MediaUpload from '../components/admin/MediaUpload';
-import ScheduleList from '../components/admin/ScheduleList';
 import ScheduleForm from '../components/admin/ScheduleForm';
+import ScheduleList from '../components/admin/ScheduleList';
 import Stats from '../components/admin/Stats';
+import { api } from '../services/api';
 import './AdminPage.css';
 
 export default function AdminPage() {
@@ -151,7 +151,7 @@ export default function AdminPage() {
                   {schedules.slice(0, 5).map(s => (
                     <div key={s.id} className="recent-item">
                       <span className={`type-badge regiao-${s.regiao}`}>
-                        {s.regiao === 1 ? 'Vídeo' : s.regiao === 2 ? 'Foto' : 'Texto'}
+                        {s.regiao === 1 ? 'Vídeo' : s.regiao === 2 ? 'Imagem' : 'Texto'}
                       </span>
                       <span>{s.media_nome}</span>
                       <span className="schedule-time">

@@ -14,12 +14,12 @@ export const api = {
 
   // Media endpoints
   async getMedia() {
-    const response = await fetch(`${API_BASE}/media`);
+    const response = await fetch(`${API_BASE}/media/`);
     return response.json();
   },
 
   async getMediaById(id) {
-    const response = await fetch(`${API_BASE}/media/${id}`);
+    const response = await fetch(`${API_BASE}/media/${id}/`);
     return response.json();
   },
 
@@ -76,19 +76,19 @@ export const api = {
   // Schedule endpoints
   async getSchedules(regiao = null) {
     const url = regiao 
-      ? `${API_BASE}/schedule?regiao=${regiao}`
-      : `${API_BASE}/schedule`;
+      ? `${API_BASE}/schedule/?regiao=${regiao}`
+      : `${API_BASE}/schedule/`;
     const response = await fetch(url);
     return response.json();
   },
 
   async getScheduleById(id) {
-    const response = await fetch(`${API_BASE}/schedule/${id}`);
+    const response = await fetch(`${API_BASE}/schedule/${id}/`);
     return response.json();
   },
 
   async createSchedule(data) {
-    const response = await fetch(`${API_BASE}/schedule`, {
+    const response = await fetch(`${API_BASE}/schedule/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -99,7 +99,7 @@ export const api = {
   },
 
   async updateSchedule(id, data) {
-    const response = await fetch(`${API_BASE}/schedule/${id}`, {
+    const response = await fetch(`${API_BASE}/schedule/${id}/`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -110,14 +110,14 @@ export const api = {
   },
 
   async deleteSchedule(id) {
-    const response = await fetch(`${API_BASE}/schedule/${id}`, {
+    const response = await fetch(`${API_BASE}/schedule/${id}/`, {
       method: 'DELETE'
     });
     return response.json();
   },
 
   async getNextSchedules(regiao, hours = 24) {
-    const response = await fetch(`${API_BASE}/schedule/next/${regiao}?hours=${hours}`);
+    const response = await fetch(`${API_BASE}/schedule/next/${regiao}/?hours=${hours}`);
     return response.json();
   }
 };

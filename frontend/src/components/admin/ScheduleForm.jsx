@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 
 export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
@@ -79,11 +79,11 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
             <label>Região</label>
             <select name="regiao" className="form-control" value={formData.regiao} onChange={handleChange}>
               <option value={1}>Região 1 - Vídeo</option>
-              <option value={2}>Região 2 - Foto</option>
+              <option value={2}>Região 2 - Imagem</option>
               <option value={4}>Região 4 - Texto</option>
             </select>
           </div>
-
+          
           <div className="form-group">
             <label>Mídia</label>
             <select name="media_id" className="form-control" value={formData.media_id} onChange={handleChange} required>

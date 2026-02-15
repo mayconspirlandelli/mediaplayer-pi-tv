@@ -162,7 +162,7 @@ Content-Type: application/json
 
 **Campos:**
 - `media_id`: ID da mídia (obrigatório)
-- `regiao`: 1=vídeo, 2=foto, 4=texto (obrigatório)
+- `regiao`: 1=vídeo, 2=imagem, 4=texto (obrigatório)
 - `data_inicio`: YYYY-MM-DD (obrigatório)
 - `data_fim`: YYYY-MM-DD (obrigatório)
 - `hora_inicio`: HH:MM:SS (obrigatório)
@@ -230,7 +230,7 @@ Retorna o conteúdo que deve estar sendo exibido AGORA em cada região.
     "duracao": 30,
     "schedule_id": 1
   },
-  "foto": {
+  "imagem": {
     "id": 8,
     "tipo": "imagem",
     "nome": "Banner",

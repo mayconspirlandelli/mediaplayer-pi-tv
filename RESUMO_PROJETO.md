@@ -8,7 +8,7 @@ Sistema completo de **digital signage** (painel eletrônico) desenvolvido especi
 
 ### Funcionalidades
 - ✅ Exibição fullscreen automática (1920x1080)
-- ✅ 3 regiões de conteúdo independentes (vídeo, foto, clima)
+- ✅ 3 regiões de conteúdo independentes (vídeo, imagem, clima)
 - ✅ Sistema de agendamento completo (data, hora, dias da semana)
 - ✅ Painel administrativo web intuitivo
 - ✅ Previsão do tempo em tempo real
@@ -70,7 +70,7 @@ HDMI → Smart TV
 │                                              │
 │  ┌────────────────┬──────────────────────┐  │
 │  │                │                      │  │
-│  │  VÍDEOS        │     FOTOS            │  │
+│  │  VÍDEOS        │     Imagens            │  │
 │  │  (1080x980)    │     (840x980)        │  │
 │  │                │                      │  │
 │  │                ├──────────────────────┤  │
@@ -83,7 +83,7 @@ HDMI → Smart TV
 ### Regiões
 
 1. **Região 1 (Esquerda)**: Vídeos verticais em loop
-2. **Região 2 (Superior Direita)**: Fotos com rotação automática
+2. **Região 2 (Superior Direita)**: Imagens com rotação automática
 3. **Região 3 (Inferior Direita)**: Data, hora e previsão do tempo
 4. ~~**Região 4 (Inferior)**~~: Desabilitada no layout atual
 
@@ -96,7 +96,7 @@ HDMI → Smart TV
 
 ### Recepções Corporativas
 - Vídeo institucional da empresa
-- Fotos de produtos/serviços
+- Imagens de produtos/serviços
 - Informações em tempo real
 
 ### Lojas e Comércio
@@ -128,7 +128,7 @@ Vídeo Promocional:
 - Dias: Segunda a Sexta
 - Prioridade: 5 (média)
 
-Foto Banner Black Friday:
+Imagem Banner Black Friday:
 - Período: 23/11/2026 a 29/11/2026
 - Horário: 00:00 às 23:59
 - Dias: Todos
