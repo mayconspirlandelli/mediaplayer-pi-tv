@@ -1,0 +1,73 @@
+.weather-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.weather-left {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.date {
+  font-size: 18px;
+  font-weight: 500;
+  opacity: 0.95;
+}
+
+.time {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.weather-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.weather-icon {
+  font-size: 50px;
+  line-height: 1;
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.temperature {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.condition {
+  font-size: 15px;
+  opacity: 0.9;
+  text-transform: capitalize;
+}
+
+.weather-loading {
+  font-size: 16px;
+  opacity: 0.8;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
