@@ -43,6 +43,7 @@ export default function PhotoRegion({ content }) {
         </div>
       )}
       <img
+        key={content.id}
         src={`/${content.caminho_arquivo}`}
         alt={content.nome}
         className={`photo-image ${imageLoaded ? 'loaded' : ''}`}

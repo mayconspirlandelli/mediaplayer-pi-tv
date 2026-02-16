@@ -50,6 +50,7 @@ class SchedulerService:
     ) -> Optional[Dict]:
         """
         Busca conteúdo ativo para uma região específica
+        Implementa rotação automática baseada na duração de cada conteúdo
         """
         # Query para buscar schedules ativos
         schedules = db.query(Schedule).join(Media).filter(
@@ -62,7 +63,7 @@ class SchedulerService:
                 Schedule.hora_inicio <= current_time,
                 Schedule.hora_fim >= current_time
             )
-        ).order_by(Schedule.prioridade.desc()).all()
+        ).order_by(Schedule.prioridade.desc(), Schedule.id).all()
         
         # Filtrar por dia da semana
         valid_schedules = []
@@ -74,8 +75,38 @@ class SchedulerService:
         if not valid_schedules:
             return None
         
-        # Retornar o de maior prioridade
-        schedule = valid_schedules[0]
+        # Se houver múltiplos conteúdos com a mesma prioridade, rotacionar baseado na duração
+        if len(valid_schedules) > 1:
+            max_priority = valid_schedules[0].prioridade
+            same_priority_schedules = [s for s in valid_schedules if s.prioridade == max_priority]
+            
+            if len(same_priority_schedules) > 1:
+                # Calcular qual conteúdo deve ser exibido baseado na duração
+                now = datetime.now()
+                
+                # Usar timestamp em segundos desde o início do dia
+                seconds_since_midnight = (now.hour * 3600) + (now.minute * 60) + now.second
+                
+                # Calcular ciclo total (soma de todas as durações)
+                total_duration = sum(s.duracao for s in same_priority_schedules)
+                
+                # Calcular posição no ciclo atual
+                cycle_position = seconds_since_midnight % total_duration
+                
+                # Encontrar qual conteúdo deve ser exibido
+                cumulative_time = 0
+                schedule = same_priority_schedules[0]  # fallback
+                
+                for s in same_priority_schedules:
+                    cumulative_time += s.duracao
+                    if cycle_position < cumulative_time:
+                        schedule = s
+                        break
+            else:
+                schedule = valid_schedules[0]
+        else:
+            schedule = valid_schedules[0]
+        
         media = schedule.media
         
         # Normalizar caminho do arquivo para usar barras / (URLs)

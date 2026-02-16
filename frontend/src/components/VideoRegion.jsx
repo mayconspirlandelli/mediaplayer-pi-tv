@@ -61,6 +61,7 @@ export default function VideoRegion({ content }) {
   return (
     <div className="video-container">
       <video
+        key={content.id}
         ref={videoRef}
         className="video-player"
         autoPlay

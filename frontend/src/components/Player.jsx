@@ -22,7 +22,7 @@ export default function Player() {
     };
 
     fetchContent();
-    const interval = setInterval(fetchContent, 5000); // Atualizar a cada 5 segundos
+    const interval = setInterval(fetchContent, 1000); // Atualizar a cada 1 segundo
 
     return () => clearInterval(interval);
   }, []);
