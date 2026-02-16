@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './VideoRegion.css';
 
 export default function VideoRegion({ content }) {
@@ -6,18 +6,33 @@ export default function VideoRegion({ content }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (content && videoRef.current) {
-      setError(false);
-      videoRef.current.load();
-      
-      const playPromise = videoRef.current.play();
+    const video = videoRef.current;
+    if (!content || !video) return;
+
+    setError(false);
+    
+    // Aguardar o vídeo estar pronto antes de tentar dar play
+    const handleCanPlay = () => {
+      const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => {
-          console.error('Erro ao reproduzir vídeo:', err);
-          setError(true);
+          // Ignorar erros de AbortError (interrupção normal)
+          if (err.name !== 'AbortError') {
+            console.error('Erro ao reproduzir vídeo:', err);
+            setError(true);
+          }
         });
       }
-    }
+    };
+
+    video.addEventListener('canplay', handleCanPlay);
+    video.load();
+
+    // Cleanup: remover listener e pausar vídeo ao desmontar/trocar
+    return () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.pause();
+    };
   }, [content]);
 
   if (!content) {
@@ -54,7 +69,7 @@ export default function VideoRegion({ content }) {
         playsInline
         onError={() => setError(true)}
       >
-        <source src={content.caminho_arquivo} type="video/mp4" />
+        <source src={`/${content.caminho_arquivo}`} type="video/mp4" />
         Seu navegador não suporta vídeo.
       </video>
     </div>

@@ -78,11 +78,16 @@ class SchedulerService:
         schedule = valid_schedules[0]
         media = schedule.media
         
+        # Normalizar caminho do arquivo para usar barras / (URLs)
+        caminho_arquivo = None
+        if media.tipo != "texto" and media.caminho_arquivo:
+            caminho_arquivo = media.caminho_arquivo.replace("\\", "/")
+        
         return {
             "id": media.id,
             "tipo": media.tipo,
             "nome": media.nome,
-            "caminho_arquivo": media.caminho_arquivo if media.tipo != "texto" else None,
+            "caminho_arquivo": caminho_arquivo,
             "texto": media.texto if media.tipo == "texto" else None,
             "duracao": schedule.duracao,
             "schedule_id": schedule.id

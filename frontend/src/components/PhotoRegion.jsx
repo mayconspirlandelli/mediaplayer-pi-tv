@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './PhotoRegion.css';
 
 export default function PhotoRegion({ content }) {
@@ -43,7 +43,7 @@ export default function PhotoRegion({ content }) {
         </div>
       )}
       <img
-        src={content.caminho_arquivo}
+        src={`/${content.caminho_arquivo}`}
         alt={content.nome}
         className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
         onLoad={() => setImageLoaded(true)}

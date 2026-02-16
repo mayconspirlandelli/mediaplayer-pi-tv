@@ -55,6 +55,11 @@ if os.path.exists(DIST_DIR):
         """Serve o painel admin (frontend)"""
         return FileResponse(f"{DIST_DIR}/index.html")
 
+@app.get("/test_player.html")
+async def serve_test_player():
+    """Serve página de teste do player"""
+    return FileResponse("test_player.html")
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
