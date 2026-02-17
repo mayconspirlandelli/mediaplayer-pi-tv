@@ -18,7 +18,10 @@ export default function PhotoRegion({ content, onImageComplete }) {
 
     // Usar a duração definida no agendamento (em segundos)
     const duration = content.duracao || 10; // fallback de 10 segundos
+    console.log(`🖼️ Imagem carregada: ${content.nome}, duração: ${duration}s`);
+    
     const timer = setTimeout(() => {
+      console.log('🖼️ Tempo da imagem acabou! Buscando próxima...');
       onImageComplete();
     }, duration * 1000);
 
@@ -60,8 +63,14 @@ export default function PhotoRegion({ content, onImageComplete }) {
         src={`/${content.caminho_arquivo}`}
         alt={content.nome}
         className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
-        onLoad={() => setImageLoaded(true)}
-        onError={() => setError(true)}
+        onLoad={() => {
+          console.log('🖼️ Imagem carregou:', content.nome);
+          setImageLoaded(true);
+        }}
+        onError={() => {
+          console.error('🖼️ Erro ao carregar imagem:', content.nome);
+          setError(true);
+        }}
       />
     </div>
   );

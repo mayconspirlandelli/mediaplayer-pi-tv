@@ -88,6 +88,9 @@ export const api = {
   },
 
   async createSchedule(data) {
+    console.log('🌐 API: Enviando POST para /api/schedule/');
+    console.log('🌐 API: Dados enviados:', JSON.stringify(data, null, 2));
+    
     const response = await fetch(`${API_BASE}/schedule/`, {
       method: 'POST',
       headers: {
@@ -95,7 +98,16 @@ export const api = {
       },
       body: JSON.stringify(data)
     });
-    return response.json();
+    
+    const result = await response.json();
+    console.log('🌐 API: Status da resposta:', response.status);
+    console.log('🌐 API: Dados recebidos:', result);
+    
+    if (!response.ok) {
+      throw new Error(result.detail || 'Erro ao criar agendamento');
+    }
+    
+    return result;
   },
 
   async updateSchedule(id, data) {

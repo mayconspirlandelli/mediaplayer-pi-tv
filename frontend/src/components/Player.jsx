@@ -21,6 +21,7 @@ export default function Player() {
     const fetchContent = async () => {
       try {
         const data = await api.getActiveContent();
+        console.log('📦 Conteúdo recebido da API:', data);
         setContent(data);
       } catch (error) {
         console.error('Erro ao buscar conteúdo:', error);

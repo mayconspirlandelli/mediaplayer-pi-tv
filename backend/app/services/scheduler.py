@@ -50,9 +50,10 @@ class SchedulerService:
     ) -> Optional[Dict]:
         """
         Busca conteúdo ativo para uma região específica
-        Implementa rotação automática baseada na duração de cada conteúdo
+        Implementa rotação automática baseada na ORDEM (prioridade) e duração de cada conteúdo
+        Ordem 1 = primeiro a ser exibido, Ordem 2 = segundo, etc.
         """
-        # Query para buscar schedules ativos
+        # Query para buscar schedules ativos - ORDENAR POR PRIORIDADE CRESCENTE (ordem)
         schedules = db.query(Schedule).join(Media).filter(
             and_(
                 Schedule.regiao == regiao,
@@ -63,7 +64,7 @@ class SchedulerService:
                 Schedule.hora_inicio <= current_time,
                 Schedule.hora_fim >= current_time
             )
-        ).order_by(Schedule.prioridade.desc(), Schedule.id).all()
+        ).order_by(Schedule.prioridade.asc(), Schedule.id).all()  # ASC = ordem crescente
         
         # Filtrar por dia da semana
         valid_schedules = []
@@ -75,35 +76,29 @@ class SchedulerService:
         if not valid_schedules:
             return None
         
-        # Se houver múltiplos conteúdos com a mesma prioridade, rotacionar baseado na duração
+        # Se houver múltiplos conteúdos, rotacionar baseado na duração (ordem sequencial)
         if len(valid_schedules) > 1:
-            max_priority = valid_schedules[0].prioridade
-            same_priority_schedules = [s for s in valid_schedules if s.prioridade == max_priority]
+            # Calcular qual conteúdo deve ser exibido baseado na duração acumulada
+            now = datetime.now()
             
-            if len(same_priority_schedules) > 1:
-                # Calcular qual conteúdo deve ser exibido baseado na duração
-                now = datetime.now()
-                
-                # Usar timestamp em segundos desde o início do dia
-                seconds_since_midnight = (now.hour * 3600) + (now.minute * 60) + now.second
-                
-                # Calcular ciclo total (soma de todas as durações)
-                total_duration = sum(s.duracao for s in same_priority_schedules)
-                
-                # Calcular posição no ciclo atual
-                cycle_position = seconds_since_midnight % total_duration
-                
-                # Encontrar qual conteúdo deve ser exibido
-                cumulative_time = 0
-                schedule = same_priority_schedules[0]  # fallback
-                
-                for s in same_priority_schedules:
-                    cumulative_time += s.duracao
-                    if cycle_position < cumulative_time:
-                        schedule = s
-                        break
-            else:
-                schedule = valid_schedules[0]
+            # Usar timestamp em segundos desde o início do dia
+            seconds_since_midnight = (now.hour * 3600) + (now.minute * 60) + now.second
+            
+            # Calcular ciclo total (soma de todas as durações em ordem)
+            total_duration = sum(s.duracao for s in valid_schedules)
+            
+            # Calcular posição no ciclo atual
+            cycle_position = seconds_since_midnight % total_duration
+            
+            # Encontrar qual conteúdo deve ser exibido seguindo a ordem
+            cumulative_time = 0
+            schedule = valid_schedules[0]  # fallback
+            
+            for s in valid_schedules:
+                cumulative_time += s.duracao
+                if cycle_position < cumulative_time:
+                    schedule = s
+                    break
         else:
             schedule = valid_schedules[0]
         

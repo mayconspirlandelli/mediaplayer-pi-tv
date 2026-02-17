@@ -36,19 +36,42 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
 
   useEffect(() => {
     const tipoRegiao = { 1: 'video', 2: 'imagem', 4: 'texto' };
-    const filtered = media.filter(m => m.tipo === tipoRegiao[formData.regiao] && m.ativo);
+    const tipoEsperado = tipoRegiao[formData.regiao];
+    
+    console.log('🔍 Filtrando mídias para região:', formData.regiao);
+    console.log('🔍 Tipo esperado:', tipoEsperado);
+    
+    const filtered = media.filter(m => {
+      const isCompativel = m.tipo === tipoEsperado && m.ativo;
+      console.log(`  - Mídia "${m.nome}" (tipo: ${m.tipo}): ${isCompativel ? '✅ compatível' : '❌ incompatível'}`);
+      return isCompativel;
+    });
+    
+    console.log('🔍 Total de mídias compatíveis:', filtered.length);
     setFilteredMedia(filtered);
     
-    if (filtered.length > 0 && !formData.media_id) {
-      setFormData(prev => ({ ...prev, media_id: filtered[0].id }));
+    // Se mudou a região ou não tem mídia selecionada, selecionar a primeira disponível
+    if (filtered.length > 0) {
+      const mediaSelecionadaValida = filtered.find(m => m.id === formData.media_id);
+      if (!mediaSelecionadaValida) {
+        console.log('🔄 Selecionando automaticamente primeira mídia compatível:', filtered[0].nome);
+        setFormData(prev => ({ ...prev, media_id: filtered[0].id }));
+      }
+    } else {
+      console.warn('⚠️ Nenhuma mídia compatível encontrada!');
+      setFormData(prev => ({ ...prev, media_id: '' }));
     }
   }, [formData.regiao, media]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
+    console.log(`🔄 Campo alterado: ${name} = ${newValue}`);
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
   };
 
@@ -56,15 +79,27 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
     e.preventDefault();
     setSaving(true);
 
+    console.log('📝 Dados do formulário antes de enviar:', formData);
+    console.log('📝 Região selecionada:', formData.regiao);
+    console.log('📝 Mídia selecionada:', formData.media_id);
+    console.log('📝 Duração:', formData.duracao, 'segundos');
+    console.log('📝 Ordem (prioridade):', formData.prioridade);
+
     try {
       if (schedule) {
-        await api.updateSchedule(schedule.id, formData);
+        console.log('✏️ Atualizando agendamento ID:', schedule.id);
+        const response = await api.updateSchedule(schedule.id, formData);
+        console.log('✅ Resposta do backend (update):', response);
       } else {
-        await api.createSchedule(formData);
+        console.log('➕ Criando novo agendamento');
+        const response = await api.createSchedule(formData);
+        console.log('✅ Resposta do backend (create):', response);
       }
       alert('Agendamento salvo com sucesso!');
       if (onSaved) onSaved();
     } catch (error) {
+      console.error('❌ Erro ao salvar agendamento:', error);
+      console.error('❌ Detalhes do erro:', error.response?.data);
       alert('Erro ao salvar: ' + (error.response?.data?.detail || error.message));
     } finally {
       setSaving(false);
@@ -87,11 +122,18 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           <div className="form-group">
             <label>Mídia</label>
             <select name="media_id" className="form-control" value={formData.media_id} onChange={handleChange} required>
-              {filteredMedia.length === 0 && <option>Nenhuma mídia disponível</option>}
+              {filteredMedia.length === 0 && <option value="">Nenhuma mídia disponível para esta região</option>}
               {filteredMedia.map(m => (
-                <option key={m.id} value={m.id}>{m.nome}</option>
+                <option key={m.id} value={m.id}>
+                  {m.nome} ({m.tipo})
+                </option>
               ))}
             </select>
+            {filteredMedia.length === 0 && (
+              <small style={{color: '#f59e0b', display: 'block', marginTop: '5px'}}>
+                ⚠️ Faça upload de uma mídia do tipo correto primeiro
+              </small>
+            )}
           </div>
 
           <div className="form-group">
