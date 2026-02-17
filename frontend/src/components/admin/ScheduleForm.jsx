@@ -16,6 +16,8 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
   });
   const [saving, setSaving] = useState(false);
   const [filteredMedia, setFilteredMedia] = useState([]);
+  const [textoAviso, setTextoAviso] = useState('');
+  const MAX_CARACTERES = 200;
 
   useEffect(() => {
     if (schedule) {
@@ -41,6 +43,13 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
     console.log('🔍 Filtrando mídias para região:', formData.regiao);
     console.log('🔍 Tipo esperado:', tipoEsperado);
     
+    // Se for região 4, não precisa filtrar mídias (será criada automaticamente)
+    if (formData.regiao === 4) {
+      setFilteredMedia([]);
+      setFormData(prev => ({ ...prev, media_id: '' }));
+      return;
+    }
+    
     const filtered = media.filter(m => {
       const isCompativel = m.tipo === tipoEsperado && m.ativo;
       console.log(`  - Mídia "${m.nome}" (tipo: ${m.tipo}): ${isCompativel ? '✅ compatível' : '❌ incompatível'}`);
@@ -65,9 +74,14 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
+    let newValue = type === 'checkbox' ? checked : value;
     
-    console.log(`🔄 Campo alterado: ${name} = ${newValue}`);
+    // Converter para número se for o campo 'regiao'
+    if (name === 'regiao') {
+      newValue = parseInt(value, 10);
+    }
+    
+    console.log(`🔄 Campo alterado: ${name} = ${newValue} (tipo: ${typeof newValue})`);
     
     setFormData(prev => ({
       ...prev,
@@ -86,13 +100,32 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
     console.log('📝 Ordem (prioridade):', formData.prioridade);
 
     try {
+      let mediaId = formData.media_id;
+
+      // Se for região 4 (texto/aviso), criar mídia de texto automaticamente
+      if (formData.regiao === 4) {
+        if (!textoAviso.trim()) {
+          alert('Por favor, digite o texto do aviso!');
+          setSaving(false);
+          return;
+        }
+
+        console.log('📢 Criando mídia de texto para aviso:', textoAviso);
+        const nomeAviso = `Aviso ${new Date().toLocaleString('pt-BR')}`;
+        const mediaCriada = await api.createTextMedia(nomeAviso, textoAviso);
+        console.log('✅ Mídia de texto criada:', mediaCriada);
+        mediaId = mediaCriada.id;
+      }
+
+      const dadosAgendamento = { ...formData, media_id: mediaId };
+
       if (schedule) {
         console.log('✏️ Atualizando agendamento ID:', schedule.id);
-        const response = await api.updateSchedule(schedule.id, formData);
+        const response = await api.updateSchedule(schedule.id, dadosAgendamento);
         console.log('✅ Resposta do backend (update):', response);
       } else {
         console.log('➕ Criando novo agendamento');
-        const response = await api.createSchedule(formData);
+        const response = await api.createSchedule(dadosAgendamento);
         console.log('✅ Resposta do backend (create):', response);
       }
       alert('Agendamento salvo com sucesso!');
@@ -121,18 +154,46 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           
           <div className="form-group">
             <label>Mídia</label>
-            <select name="media_id" className="form-control" value={formData.media_id} onChange={handleChange} required>
-              {filteredMedia.length === 0 && <option value="">Nenhuma mídia disponível para esta região</option>}
-              {filteredMedia.map(m => (
-                <option key={m.id} value={m.id}>
-                  {m.nome} ({m.tipo})
-                </option>
-              ))}
-            </select>
-            {filteredMedia.length === 0 && (
-              <small style={{color: '#f59e0b', display: 'block', marginTop: '5px'}}>
-                ⚠️ Faça upload de uma mídia do tipo correto primeiro
-              </small>
+            {formData.regiao === 4 ? (
+              <div>
+                <textarea
+                  className="form-control"
+                  value={textoAviso}
+                  onChange={(e) => {
+                    if (e.target.value.length <= MAX_CARACTERES) {
+                      setTextoAviso(e.target.value);
+                    }
+                  }}
+                  placeholder="Digite o texto do aviso aqui..."
+                  rows="4"
+                  style={{resize: 'vertical', fontFamily: 'inherit'}}
+                  required
+                />
+                <small style={{
+                  display: 'block',
+                  marginTop: '5px',
+                  color: textoAviso.length >= MAX_CARACTERES ? '#ef4444' : '#6b7280'
+                }}>
+                  {textoAviso.length}/{MAX_CARACTERES} caracteres
+                  {textoAviso.length >= MAX_CARACTERES && ' (limite atingido)'}
+                </small>
+              </div>
+            ) : (
+              <>
+                <select name="media_id" className="form-control" value={formData.media_id} onChange={handleChange} required>
+                  {filteredMedia.length === 0 && <option value="">Nenhuma mídia disponível para esta região</option>}
+                  {filteredMedia.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.nome} ({m.tipo})
+                    </option>
+                  ))}
+                </select>
+                {filteredMedia.length === 0 && (
+                  <small style={{color: '#f59e0b', display: 'block', marginTop: '5px'}}>
+                    ⚠️ Faça upload de uma mídia do tipo correto primeiro
+                  </small>
+                )}
+              </>
             )}
           </div>
 
@@ -204,7 +265,11 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="btn btn-primary" disabled={saving || filteredMedia.length === 0}>
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={saving || (formData.regiao === 4 ? !textoAviso.trim() : filteredMedia.length === 0)}
+          >
             {saving ? 'Salvando...' : '✓ Salvar'}
           </button>
           <button type="button" className="btn" onClick={onCancel} style={{background: '#e2e8f0'}}>
