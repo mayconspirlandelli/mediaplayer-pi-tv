@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './WeatherRegion.css';
 
 export default function WeatherRegion({ weather }) {
@@ -19,8 +19,9 @@ export default function WeatherRegion({ weather }) {
     const dayName = days[date.getDay()];
     const day = date.getDate().toString().padStart(2, '0');
     const month = months[date.getMonth()];
+    const year = date.getFullYear();
     
-    return `${dayName}, ${day} ${month}`;
+    return `${dayName}, ${day} de ${month} de ${year}`;
   };
 
   const formatTime = (date) => {
@@ -31,18 +32,30 @@ export default function WeatherRegion({ weather }) {
 
   return (
     <div className="weather-container">
-      <div className="weather-left">
+      {/* Data e Hora no topo */}
+      <div className="weather-top">
         <div className="date">{formatDate(currentTime)}</div>
         <div className="time">{formatTime(currentTime)}</div>
       </div>
       
-      <div className="weather-right">
+      {/* Clima embaixo em card azul */}
+      <div className="weather-bottom">
         {weather ? (
           <>
             <div className="weather-icon">{weather.emoji || '🌡️'}</div>
             <div className="weather-info">
-              <div className="temperature">{weather.temperatura}°C</div>
-              <div className="condition">{weather.condicao}</div>
+              <div className="temperature">{Math.round(weather.temperatura)}°C</div>
+              <div className="condition">{weather.descricao || weather.condicao}</div>
+            </div>
+            <div className="weather-details">
+              <div className="weather-detail">
+                <div className="weather-detail-icon">💧</div>
+                <div className="weather-detail-value">{weather.umidade}%</div>
+              </div>
+              <div className="weather-detail">
+                <div className="weather-detail-icon">🌬️</div>
+                <div className="weather-detail-value">{Math.round(weather.vento)} km/h</div>
+              </div>
             </div>
           </>
         ) : (

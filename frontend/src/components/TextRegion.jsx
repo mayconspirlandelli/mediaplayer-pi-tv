@@ -20,8 +20,11 @@ export default function TextRegion({ content }) {
   if (!content) {
     return (
       <div className="text-container">
-        <div className="text-content no-text">
-          📢 Sem avisos no momento
+        <div className="text-label">📢 Avisos</div>
+        <div className="text-content-wrapper">
+          <div className="text-content no-text">
+            Sem avisos no momento
+          </div>
         </div>
       </div>
     );
@@ -29,8 +32,11 @@ export default function TextRegion({ content }) {
 
   return (
     <div className="text-container">
-      <div className="text-content" ref={textRef}>
-        {content.texto}
+      <div className="text-label">📢 Avisos</div>
+      <div className="text-content-wrapper">
+        <div className="text-content" ref={textRef}>
+          {content.texto}
+        </div>
       </div>
     </div>
   );

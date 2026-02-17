@@ -1,24 +1,42 @@
 .text-container {
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.text-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #006BA6;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.text-content-wrapper {
+  flex: 1;
   display: flex;
   align-items: center;
   overflow: hidden;
-  padding: 0 40px;
+  width: 100%;
 }
 
 .text-content {
-  color: white;
-  font-size: 28px;
+  color: #333333;
+  font-size: 32px;
   font-weight: 600;
   white-space: nowrap;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.2;
 }
 
 .text-content.no-text {
-  opacity: 0.7;
+  opacity: 0.4;
   font-size: 24px;
+  color: #999999;
 }
 
 .text-content.scrolling {
@@ -29,6 +47,7 @@
   0% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(-100%);
   }
