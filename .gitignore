@@ -26,6 +26,8 @@ dist/
 # Uploads
 uploads/*
 !uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
 
 # Env
 .env
