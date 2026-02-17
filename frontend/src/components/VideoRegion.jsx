@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './VideoRegion.css';
 
-export default function VideoRegion({ content }) {
+export default function VideoRegion({ content, onVideoEnd }) {
   const videoRef = useRef(null);
   const [error, setError] = useState(false);
 
@@ -11,8 +11,17 @@ export default function VideoRegion({ content }) {
 
     setError(false);
     
+    // Quando o vídeo terminar, notificar o Player para buscar próximo conteúdo
+    const handleEnded = () => {
+      console.log('🎬 Vídeo terminou! Buscando próximo...');
+      if (onVideoEnd) {
+        onVideoEnd();
+      }
+    };
+    
     // Aguardar o vídeo estar pronto antes de tentar dar play
     const handleCanPlay = () => {
+      console.log('🎬 Vídeo pronto para reproduzir');
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => {
@@ -25,15 +34,23 @@ export default function VideoRegion({ content }) {
       }
     };
 
+    // Log adicional para debug
+    video.addEventListener('loadedmetadata', () => {
+      console.log('🎬 Metadados carregados. Duração:', video.duration, 'segundos');
+    });
+
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('ended', handleEnded);
     video.load();
 
-    // Cleanup: remover listener e pausar vídeo ao desmontar/trocar
+    // Cleanup: remover listeners e pausar vídeo ao desmontar/trocar
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('loadedmetadata', () => {});
       video.pause();
     };
-  }, [content]);
+  }, [content, onVideoEnd]);
 
   if (!content) {
     return (
@@ -65,7 +82,6 @@ export default function VideoRegion({ content }) {
         ref={videoRef}
         className="video-player"
         autoPlay
-        loop
         muted
         playsInline
         onError={() => setError(true)}

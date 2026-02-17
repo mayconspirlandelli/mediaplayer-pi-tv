@@ -9,6 +9,12 @@ import WeatherRegion from './WeatherRegion';
 export default function Player() {
   const [content, setContent] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Função para forçar atualização de conteúdo
+  const refreshContent = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   // Buscar conteúdo ativo
   useEffect(() => {
@@ -22,10 +28,7 @@ export default function Player() {
     };
 
     fetchContent();
-    const interval = setInterval(fetchContent, 1000); // Atualizar a cada 1 segundo
-
-    return () => clearInterval(interval);
-  }, []);
+  }, [refreshKey]);
 
   // Buscar clima
   useEffect(() => {
@@ -49,12 +52,12 @@ export default function Player() {
       <div className="player-grid">
         {/* REGIÃO 1: Vídeos Verticais */}
         <div className="region region-video">
-          <VideoRegion content={content?.video} />
+          <VideoRegion content={content?.video} onVideoEnd={refreshContent} />
         </div>
 
         {/* REGIÃO 2: Imagens */}
         <div className="region region-photo">
-          <PhotoRegion content={content?.imagem} />
+          <PhotoRegion content={content?.imagem} onImageComplete={refreshContent} />
         </div>
 
         {/* REGIÃO 3: Clima */}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './PhotoRegion.css';
 
-export default function PhotoRegion({ content }) {
+export default function PhotoRegion({ content, onImageComplete }) {
   const [error, setError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -11,6 +11,19 @@ export default function PhotoRegion({ content }) {
       setImageLoaded(false);
     }
   }, [content]);
+
+  // Quando a imagem carregar, iniciar timer baseado na duração
+  useEffect(() => {
+    if (!content || !imageLoaded || !onImageComplete) return;
+
+    // Usar a duração definida no agendamento (em segundos)
+    const duration = content.duracao || 10; // fallback de 10 segundos
+    const timer = setTimeout(() => {
+      onImageComplete();
+    }, duration * 1000);
+
+    return () => clearTimeout(timer);
+  }, [content, imageLoaded, onImageComplete]);
 
   if (!content) {
     return (
