@@ -146,9 +146,9 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           <div className="form-group">
             <label>Região</label>
             <select name="regiao" className="form-control" value={formData.regiao} onChange={handleChange}>
-              <option value={1}>Região 1 - Vídeo</option>
-              <option value={2}>Região 2 - Imagem</option>
-              <option value={4}>Região 4 - Texto</option>
+              <option value={1}>Região 1 - Vertical</option>
+              <option value={2}>Região 2 - Quadrado</option>
+              <option value={4}>Região 4 - Avisos</option>
             </select>
           </div>
           

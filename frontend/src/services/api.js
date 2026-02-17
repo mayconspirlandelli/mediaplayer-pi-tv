@@ -128,6 +128,17 @@ export const api = {
     return response.json();
   },
 
+  async reorderSchedules(updates) {
+    const response = await fetch(`${API_BASE}/schedule/reorder`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updates)
+    });
+    return response.json();
+  },
+
   async getNextSchedules(regiao, hours = 24) {
     const response = await fetch(`${API_BASE}/schedule/next/${regiao}/?hours=${hours}`);
     return response.json();

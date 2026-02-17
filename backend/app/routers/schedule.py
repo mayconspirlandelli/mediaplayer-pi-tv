@@ -245,3 +245,25 @@ async def check_conflicts(
         "valid": is_valid,
         "message": error_msg if not is_valid else "Sem conflitos"
     }
+
+@router.put("/reorder")
+async def reorder_schedules(
+    updates: List[dict],
+    db: Session = Depends(get_db)
+):
+    """Atualiza a ordem (prioridade) de múltiplos agendamentos"""
+    try:
+        for update in updates:
+            schedule_id = update.get('id')
+            new_prioridade = update.get('prioridade')
+            
+            if schedule_id and new_prioridade is not None:
+                schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+                if schedule:
+                    schedule.prioridade = new_prioridade
+        
+        db.commit()
+        return {"message": f"{len(updates)} agendamentos reordenados com sucesso"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
