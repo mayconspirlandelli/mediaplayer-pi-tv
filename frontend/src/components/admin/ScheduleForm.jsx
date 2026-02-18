@@ -223,8 +223,9 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           </div>
 
           <div className="form-group">
-            <label>Prioridade (1-10)</label>
-            <input type="number" name="prioridade" className="form-control" value={formData.prioridade} onChange={handleChange} min="1" max="10" />
+            <label>Ordem (Execução)</label>
+            <input type="number" name="prioridade" className="form-control" value={formData.prioridade} onChange={handleChange} min="1" />
+            <small style={{color: '#6b7280'}}>Ex: 1 executa primeiro, 2 depois, etc.</small>
           </div>
         </div>
 

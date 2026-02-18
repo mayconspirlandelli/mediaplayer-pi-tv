@@ -77,85 +77,103 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
   const handleDragStart = (e, schedule) => {
     console.log('🎯 Drag Start:', schedule.media_nome);
     setDraggedItem(schedule);
+    
+    // Essencial para o Firefox e para definir o que está sendo movido
+    e.dataTransfer.setData('text/plain', schedule.id.toString());
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Adicionar classe visual à linha arrastada (opcional, via pointer-events ou opacity)
+  };
+
+  const handleDragEnter = (e, schedule) => {
+    e.preventDefault();
+    if (draggedItem && draggedItem.id !== schedule.id) {
+      // Opcional: só marcar como over se for da mesma região
+      if (draggedItem.regiao === schedule.regiao) {
+        setDragOverItem(schedule);
+      }
+    }
   };
 
   const handleDragOver = (e, schedule) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.preventDefault(); // Necessário para permitir o drop
+    
     if (draggedItem && draggedItem.id !== schedule.id) {
-      setDragOverItem(schedule);
+      if (draggedItem.regiao === schedule.regiao) {
+        e.dataTransfer.dropEffect = 'move';
+        // Garantir que o estado de over está sincronizado
+        if (!dragOverItem || dragOverItem.id !== schedule.id) {
+          setDragOverItem(schedule);
+        }
+      } else {
+        e.dataTransfer.dropEffect = 'none';
+      }
     }
   };
 
   const handleDragLeave = (e) => {
-    setDragOverItem(null);
+    // Só limpar se estivermos realmente saindo da linha
+    // setDragOverItem(null);
   };
 
   const handleDrop = async (e, targetSchedule) => {
     e.preventDefault();
+    setDragOverItem(null);
     
     console.log('📍 Drop em:', targetSchedule.media_nome);
-    console.log('🔄 Item arrastado:', draggedItem?.media_nome);
     
     if (!draggedItem || draggedItem.id === targetSchedule.id) {
       setDraggedItem(null);
-      setDragOverItem(null);
       return;
     }
 
     // Verifica se são da mesma região
     if (draggedItem.regiao !== targetSchedule.regiao) {
-      alert('Só é possível reordenar agendamentos da mesma região!');
+      console.log('⚠️ Regiões diferentes, ignorando drop');
       setDraggedItem(null);
-      setDragOverItem(null);
       return;
     }
 
-    // Filtra apenas agendamentos da mesma região
+    // Filtrar e ordenar agendamentos da mesma região para calcular novas prioridades
     const sameRegionSchedules = schedules
       .filter(s => s.regiao === draggedItem.regiao)
       .sort((a, b) => a.prioridade - b.prioridade);
     
-    console.log('📋 Agendamentos da mesma região:', sameRegionSchedules.length);
-    
-    // Encontra os índices
     const draggedIndex = sameRegionSchedules.findIndex(s => s.id === draggedItem.id);
     const targetIndex = sameRegionSchedules.findIndex(s => s.id === targetSchedule.id);
 
-    console.log('📊 Índice origem:', draggedIndex, 'Índice destino:', targetIndex);
-
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedItem(null);
-      setDragOverItem(null);
       return;
     }
 
-    // Reordena o array
+    // Gerar novo array com a ordem alterada
     const reordered = [...sameRegionSchedules];
     const [removed] = reordered.splice(draggedIndex, 1);
     reordered.splice(targetIndex, 0, removed);
 
-    // Atualiza as prioridades
+    // Mapear para o formato esperado pela API (id e nova prioridade)
     const updates = reordered.map((schedule, index) => ({
       id: schedule.id,
       prioridade: index + 1
     }));
 
-    console.log('💾 Atualizações:', updates);
+    console.log('💾 Enviando reordenação para API:', updates);
 
     try {
-      const result = await api.reorderSchedules(updates);
-      console.log('✅ Resultado:', result);
-      // Recarrega a lista
-      window.location.reload();
+      await api.reorderSchedules(updates);
+      console.log('✅ Reordenação concluída com sucesso');
+      // Em vez de reload total, o componente pai deveria recarregar os dados
+      // Mas como não temos essa prop, vamos manter o reload ou emitir evento
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     } catch (error) {
       console.error('❌ Erro ao reordenar:', error);
-      alert('Erro ao reordenar agendamentos: ' + error.message);
+      alert('Erro ao reordenar: ' + error.message);
     }
 
     setDraggedItem(null);
-    setDragOverItem(null);
   };
 
   const handleDragEnd = () => {
@@ -209,6 +227,7 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
           {sortedSchedules.map(s => (
             <tr 
               key={s.id}
+              onDragEnter={(e) => handleDragEnter(e, s)}
               onDragOver={(e) => handleDragOver(e, s)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, s)}
