@@ -1,63 +1,52 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './VideoRegion.css';
 
 export default function VideoRegion({ content, onVideoEnd }) {
-  const videoRef = useRef(null);
   const [error, setError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!content || !video) return;
+    console.log('🎬 VideoRegion: Conteúdo recebido:', content);
+    if (content) {
+      setError(false);
+      setImageLoaded(false);
+    }
+  }, [content]);
 
-    setError(false);
+  // Fallback para Erros
+  useEffect(() => {
+    if (!error || !onVideoEnd) return;
     
-    // Quando o vídeo terminar, notificar o Player para buscar próximo conteúdo
-    const handleEnded = () => {
-      console.log('🎬 Vídeo terminou! Buscando próximo...');
-      if (onVideoEnd) {
-        onVideoEnd();
-      }
-    };
+    const errorTimer = setTimeout(() => {
+      console.warn('⚠️ VideoRegion: Media com erro. Pulando para o próximo...');
+      onVideoEnd();
+    }, 5000);
+
+    return () => clearTimeout(errorTimer);
+  }, [error, onVideoEnd]);
+
+  const isVideo = content?.tipo === 'video';
+
+  // Quando for imagem, usar temporizador
+  useEffect(() => {
+    if (!content || isVideo || !imageLoaded || !onVideoEnd) return;
+
+    const duration = content.duracao || 10;
+    console.log(`🎬 VideoRegion (Imagem): ${content.nome}, duração: ${duration}s`);
     
-    // Aguardar o vídeo estar pronto antes de tentar dar play
-    const handleCanPlay = () => {
-      console.log('🎬 Vídeo pronto para reproduzir');
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          // Ignorar erros de AbortError (interrupção normal)
-          if (err.name !== 'AbortError') {
-            console.error('Erro ao reproduzir vídeo:', err);
-            setError(true);
-          }
-        });
-      }
-    };
+    const timer = setTimeout(() => {
+      onVideoEnd();
+    }, duration * 1000);
 
-    // Log adicional para debug
-    video.addEventListener('loadedmetadata', () => {
-      console.log('🎬 Metadados carregados. Duração:', video.duration, 'segundos');
-    });
-
-    video.addEventListener('canplay', handleCanPlay);
-    video.addEventListener('ended', handleEnded);
-    video.load();
-
-    // Cleanup: remover listeners e pausar vídeo ao desmontar/trocar
-    return () => {
-      video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('loadedmetadata', () => {});
-      video.pause();
-    };
-  }, [content, onVideoEnd]);
+    return () => clearTimeout(timer);
+  }, [content, imageLoaded, onVideoEnd, isVideo]);
 
   if (!content) {
     return (
       <div className="no-content">
         <div>
           <div className="icon">🎬</div>
-          <div>Nenhum vídeo agendado</div>
+          <div>Nenhuma mídia agendada</div>
         </div>
       </div>
     );
@@ -68,7 +57,7 @@ export default function VideoRegion({ content, onVideoEnd }) {
       <div className="no-content error">
         <div>
           <div className="icon">⚠️</div>
-          <div>Erro ao carregar vídeo</div>
+          <div>Erro ao carregar mídia</div>
           <div className="small">{content.nome}</div>
         </div>
       </div>
@@ -77,18 +66,56 @@ export default function VideoRegion({ content, onVideoEnd }) {
 
   return (
     <div className="video-container">
-      <video
-        key={content.id}
-        ref={videoRef}
-        className="video-player"
-        autoPlay
-        muted
-        playsInline
-        onError={() => setError(true)}
-      >
-        <source src={`/${content.caminho_arquivo}`} type="video/mp4" />
-        Seu navegador não suporta vídeo.
-      </video>
+      {!imageLoaded && (
+        <div className="media-loading">
+          <div className="media-spinner"></div>
+        </div>
+      )}
+      
+      {/* Background Blur */}
+      {isVideo ? (
+        <video
+          key={`bg-vid-${content.id}`}
+          src={`/${content.caminho_arquivo}`}
+          className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
+          muted
+          loop
+          autoPlay
+        />
+      ) : (
+        <img
+          key={`bg-img-${content.id}`}
+          src={`/${content.caminho_arquivo}`}
+          alt=""
+          className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="photo-foreground">
+        {isVideo ? (
+          <video
+            key={`fg-vid-${content.id}`}
+            src={`/${content.caminho_arquivo}`}
+            className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
+            autoPlay
+            muted
+            playsInline
+            onLoadedData={() => setImageLoaded(true)}
+            onEnded={() => onVideoEnd()}
+            onError={() => setError(true)}
+          />
+        ) : (
+          <img
+            key={`fg-img-${content.id}`}
+            src={`/${content.caminho_arquivo}`}
+            alt={content.nome}
+            className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setError(true)}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -141,12 +141,12 @@ class SchedulerService:
         
         # Validar tipo de mídia vs região
         tipo_regiao = {
-            1: "video",
-            2: "imagem",
-            4: "texto"
+            1: ["video", "imagem"],
+            2: ["video", "imagem"],
+            4: ["texto"]
         }
         
-        if tipo_regiao.get(regiao) != media.tipo:
+        if media.tipo not in tipo_regiao.get(regiao, []):
             return False, f"Tipo de mídia '{media.tipo}' não compatível com região {regiao}"
         
         # Validar datas

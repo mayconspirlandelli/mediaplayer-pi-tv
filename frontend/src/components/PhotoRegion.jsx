@@ -13,28 +13,40 @@ export default function PhotoRegion({ content, onImageComplete }) {
     }
   }, [content]);
 
-  // Quando a imagem carregar, iniciar timer baseado na duração
+  // Fallback para Erros
   useEffect(() => {
-    if (!content || !imageLoaded || !onImageComplete) return;
+    if (!error || !onImageComplete) return;
+    
+    const errorTimer = setTimeout(() => {
+      console.warn('⚠️ PhotoRegion: Media com erro. Pulando para o próximo...');
+      onImageComplete();
+    }, 5000);
 
-    // Usar a duração definida no agendamento (em segundos)
-    const duration = content.duracao || 10; // fallback de 10 segundos
-    console.log(`🖼️ Imagem carregada: ${content.nome}, duração: ${duration}s`);
+    return () => clearTimeout(errorTimer);
+  }, [error, onImageComplete]);
+
+  const isVideo = content?.tipo === 'video';
+
+  // Quando for imagem, usar temporizador
+  useEffect(() => {
+    if (!content || isVideo || !imageLoaded || !onImageComplete) return;
+
+    const duration = content.duracao || 10;
+    console.log(`🖼️ PhotoRegion (Imagem): ${content.nome}, duração: ${duration}s`);
     
     const timer = setTimeout(() => {
-      console.log('🖼️ Tempo da imagem acabou! Buscando próxima...');
       onImageComplete();
     }, duration * 1000);
 
     return () => clearTimeout(timer);
-  }, [content, imageLoaded, onImageComplete]);
+  }, [content, imageLoaded, onImageComplete, isVideo]);
 
   if (!content) {
     return (
       <div className="no-content">
         <div>
           <div className="icon">🖼️</div>
-          <div>Nenhuma imagem agendada</div>
+          <div>Nenhuma mídia agendada</div>
         </div>
       </div>
     );
@@ -45,7 +57,7 @@ export default function PhotoRegion({ content, onImageComplete }) {
       <div className="no-content error">
         <div>
           <div className="icon">⚠️</div>
-          <div>Erro ao carregar imagem</div>
+          <div>Erro ao carregar mídia</div>
           <div className="small">{content.nome}</div>
         </div>
       </div>
@@ -60,29 +72,49 @@ export default function PhotoRegion({ content, onImageComplete }) {
         </div>
       )}
       
-      {/* Imagem de Fundo (Borrada) para preencher espaços */}
-      <img
-        src={`/${content.caminho_arquivo}`}
-        alt=""
-        className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
-      />
-
-      {/* Imagem Principal (Mantendo Proporção) */}
-      <div className="photo-foreground">
-        <img
-          key={content.id}
+      {/* Background Blur */}
+      {isVideo ? (
+        <video
+          key={`bg-vid-${content.id}`}
           src={`/${content.caminho_arquivo}`}
-          alt={content.nome}
-          className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
-          onLoad={() => {
-            console.log('🖼️ Imagem carregou:', content.nome);
-            setImageLoaded(true);
-          }}
-          onError={() => {
-            console.error('🖼️ Erro ao carregar imagem:', content.nome);
-            setError(true);
-          }}
+          className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
+          muted
+          loop
+          autoPlay
         />
+      ) : (
+        <img
+          key={`bg-img-${content.id}`}
+          src={`/${content.caminho_arquivo}`}
+          alt=""
+          className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="photo-foreground">
+        {isVideo ? (
+          <video
+            key={`fg-vid-${content.id}`}
+            src={`/${content.caminho_arquivo}`}
+            className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
+            autoPlay
+            muted
+            playsInline
+            onLoadedData={() => setImageLoaded(true)}
+            onEnded={() => onImageComplete()}
+            onError={() => setError(true)}
+          />
+        ) : (
+          <img
+            key={`fg-img-${content.id}`}
+            src={`/${content.caminho_arquivo}`}
+            alt={content.nome}
+            className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setError(true)}
+          />
+        )}
       </div>
     </div>
   );

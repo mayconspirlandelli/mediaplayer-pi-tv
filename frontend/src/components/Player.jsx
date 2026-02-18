@@ -97,12 +97,12 @@ export default function Player() {
       <div className="player-grid">
         {/* REGIÃO 1: Vídeos Verticais */}
         <div className="region region-video">
-          <VideoRegion content={videoContent} onVideoEnd={refreshVideo} />
+          <VideoRegion key={`video-${refreshVideoKey}`} content={videoContent} onVideoEnd={refreshVideo} />
         </div>
 
         {/* REGIÃO 2: Imagens */}
         <div className="region region-photo">
-          <PhotoRegion content={photoContent} onImageComplete={refreshPhoto} />
+          <PhotoRegion key={`photo-${refreshPhotoKey}`} content={photoContent} onImageComplete={refreshPhoto} />
         </div>
 
         {/* REGIÃO 3: Clima */}
@@ -112,7 +112,7 @@ export default function Player() {
 
         {/* REGIÃO 4: Avisos em Texto */}
         <div className="region region-text">
-          <TextRegion content={textContent} onTextComplete={refreshText} />
+          <TextRegion key={`text-${refreshTextKey}`} content={textContent} onTextComplete={refreshText} />
         </div>
       </div>
     </div>

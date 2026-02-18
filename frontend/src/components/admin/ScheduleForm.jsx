@@ -19,6 +19,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
   const [textoAviso, setTextoAviso] = useState('');
   const MAX_CARACTERES = 200;
 
+
   useEffect(() => {
     if (schedule) {
       setFormData({
@@ -60,11 +61,15 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
   }, [schedule, media]);
 
   useEffect(() => {
-    const tipoRegiao = { 1: 'video', 2: 'imagem', 4: 'texto' };
-    const tipoEsperado = tipoRegiao[formData.regiao];
+    const tiposPermitidosPorRegiao = { 
+      1: ['video', 'imagem'], 
+      2: ['video', 'imagem'], 
+      4: ['texto'] 
+    };
+    const tiposPermitidos = tiposPermitidosPorRegiao[formData.regiao] || [];
     
     console.log('🔍 Filtrando mídias para região:', formData.regiao);
-    console.log('🔍 Tipo esperado:', tipoEsperado);
+    console.log('🔍 Tipos permitidos:', tiposPermitidos);
     
     // Se for região 4, não precisa filtrar mídias (será criada/editada automaticamente)
     if (formData.regiao === 4) {
@@ -77,7 +82,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
     }
     
     const filtered = media.filter(m => {
-      const isCompativel = m.tipo === tipoEsperado && m.ativo;
+      const isCompativel = tiposPermitidos.includes(m.tipo) && m.ativo;
       console.log(`  - Mídia "${m.nome}" (tipo: ${m.tipo}): ${isCompativel ? '✅ compatível' : '❌ incompatível'}`);
       return isCompativel;
     });
@@ -258,7 +263,12 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           </div>
 
           <div className="form-group">
-            <label>Duração (segundos) {formData.regiao !== 1 ? '' : '(não usado para vídeos)'}</label>
+            <label>
+              Duração (segundos) 
+              {formData.regiao === 1 && filteredMedia.find(m => m.id === formData.media_id)?.tipo === 'video' 
+                ? ' (usado apenas se houver mais de um vídeo)' 
+                : ''}
+            </label>
             <input type="number" name="duracao" className="form-control" value={formData.duracao} onChange={handleChange} min="1" />
           </div>
 
