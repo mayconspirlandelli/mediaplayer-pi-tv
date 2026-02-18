@@ -162,6 +162,35 @@ async def create_text_media(
         "message": "Texto criado com sucesso"
     }
 
+@router.post("/youtube")
+async def create_youtube_media(
+    nome: str = Form(...),
+    url: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Cria uma mídia de vídeo do YouTube"""
+    
+    if not url or ("youtube.com" not in url and "youtu.be" not in url):
+        raise HTTPException(status_code=400, detail="Link do YouTube inválido")
+    
+    media = Media(
+        tipo="youtube",
+        nome=nome,
+        caminho_arquivo=url,  # Armazenamos a URL aqui
+        ativo=True
+    )
+    db.add(media)
+    db.commit()
+    db.refresh(media)
+    
+    return {
+        "id": media.id,
+        "tipo": media.tipo,
+        "nome": media.nome,
+        "url": media.caminho_arquivo,
+        "message": "Link do YouTube cadastrado com sucesso"
+    }
+
 @router.put("/{media_id}")
 async def update_media(
     media_id: int,
@@ -216,12 +245,14 @@ async def get_stats(db: Session = Depends(get_db)):
     videos = db.query(Media).filter(Media.tipo == "video").count()
     imagens = db.query(Media).filter(Media.tipo == "imagem").count()
     textos = db.query(Media).filter(Media.tipo == "texto").count()
+    youtube = db.query(Media).filter(Media.tipo == "youtube").count()
     ativos = db.query(Media).filter(Media.ativo == True).count()
     
     return {
         "total": total,
         "videos": videos,
         "imagens": imagens,
+        "youtube": youtube,
         "textos": textos,
         "ativos": ativos,
         "inativos": total - ativos

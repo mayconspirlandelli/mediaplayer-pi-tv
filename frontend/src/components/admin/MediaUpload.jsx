@@ -23,6 +23,12 @@ export default function MediaUpload({ onUploaded }) {
     try {
       if (tipo === 'texto') {
         await api.createTextMedia(nome, texto);
+      } else if (tipo === 'youtube') {
+        if (!texto.includes('youtube.com') && !texto.includes('youtu.be')) {
+          alert('Por favor, insira um link válido do YouTube');
+          return;
+        }
+        await api.createYoutubeMedia(nome, texto);
       } else {
         if (!file) {
           alert('Selecione um arquivo');
@@ -49,7 +55,8 @@ export default function MediaUpload({ onUploaded }) {
         <div className="form-group">
           <label>Tipo de Mídia</label>
           <select className="form-control" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-            <option value="video">Vídeo</option>
+            <option value="video">Vídeo Local</option>
+            <option value="youtube">Vídeo YouTube (Link)</option>
             <option value="imagem">Imagem</option>
             <option value="texto">Texto</option>
           </select>
@@ -77,6 +84,21 @@ export default function MediaUpload({ onUploaded }) {
               required
               placeholder="Digite o texto do aviso aqui..."
             />
+          </div>
+        ) : tipo === 'youtube' ? (
+          <div className="form-group">
+            <label>Link do YouTube</label>
+            <input
+              type="url"
+              className="form-control"
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              required
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            <small style={{color: '#64748b', marginTop: '5px', display: 'block'}}>
+              Dica: Cole o link completo do navegador.
+            </small>
           </div>
         ) : (
           <div className="form-group">

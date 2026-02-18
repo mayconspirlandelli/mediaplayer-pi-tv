@@ -53,6 +53,18 @@ export const api = {
     return response.json();
   },
 
+  async createYoutubeMedia(nome, url) {
+    const formData = new FormData();
+    formData.append('nome', nome);
+    formData.append('url', url);
+
+    const response = await fetch(`${API_BASE}/media/youtube`, {
+      method: 'POST',
+      body: formData
+    });
+    return response.json();
+  },
+
   async updateMedia(id, data) {
     const formData = new FormData();
     Object.keys(data).forEach(key => {

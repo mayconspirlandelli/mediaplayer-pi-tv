@@ -26,20 +26,34 @@ export default function VideoRegion({ content, onVideoEnd }) {
   }, [error, onVideoEnd]);
 
   const isVideo = content?.tipo === 'video';
+  const isYoutube = content?.tipo === 'youtube';
 
-  // Quando for imagem, usar temporizador
+  // Quando for imagem ou youtube, usar temporizador
   useEffect(() => {
     if (!content || isVideo || !imageLoaded || !onVideoEnd) return;
 
     const duration = content.duracao || 10;
-    console.log(`🎬 VideoRegion (Imagem): ${content.nome}, duração: ${duration}s`);
+    console.log(`🎬 VideoRegion (${isYoutube ? 'YouTube' : 'Imagem'}): ${content.nome}, duração: ${duration}s`);
     
     const timer = setTimeout(() => {
       onVideoEnd();
     }, duration * 1000);
 
     return () => clearTimeout(timer);
-  }, [content, imageLoaded, onVideoEnd, isVideo]);
+  }, [content, imageLoaded, onVideoEnd, isVideo, isYoutube]);
+
+  const getYoutubeEmbedUrl = (url) => {
+    if (!url) return '';
+    let videoId = '';
+    if (url.includes('v=')) {
+      videoId = url.split('v=')[1].split('&')[0];
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1].split('?')[0];
+    } else if (url.includes('embed/')) {
+      videoId = url.split('embed/')[1].split('?')[0];
+    }
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
+  };
 
   if (!content) {
     return (
@@ -67,28 +81,30 @@ export default function VideoRegion({ content, onVideoEnd }) {
   return (
     <div className="video-container">
       {!imageLoaded && (
-        <div className="media-loading">
-          <div className="media-spinner"></div>
+        <div className="photo-loading">
+          <div className="spinner"></div>
         </div>
       )}
       
       {/* Background Blur */}
-      {isVideo ? (
-        <video
-          key={`bg-vid-${content.id}`}
-          src={`/${content.caminho_arquivo}`}
-          className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
-          muted
-          loop
-          autoPlay
-        />
-      ) : (
-        <img
-          key={`bg-img-${content.id}`}
-          src={`/${content.caminho_arquivo}`}
-          alt=""
-          className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
-        />
+      {!isYoutube && (
+        isVideo ? (
+          <video
+            key={`bg-vid-${content.id}`}
+            src={`/${content.caminho_arquivo}`}
+            className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
+            muted
+            loop
+            autoPlay
+          />
+        ) : (
+          <img
+            key={`bg-img-${content.id}`}
+            src={`/${content.caminho_arquivo}`}
+            alt=""
+            className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
+          />
+        )
       )}
 
       {/* Main Content */}
@@ -104,6 +120,16 @@ export default function VideoRegion({ content, onVideoEnd }) {
             onLoadedData={() => setImageLoaded(true)}
             onEnded={() => onVideoEnd()}
             onError={() => setError(true)}
+          />
+        ) : isYoutube ? (
+          <iframe
+            key={`fg-yt-${content.id}`}
+            src={getYoutubeEmbedUrl(content.caminho_arquivo)}
+            className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            onLoad={() => setImageLoaded(true)}
+            allow="autoplay; encrypted-media"
+            title={content.nome}
           />
         ) : (
           <img

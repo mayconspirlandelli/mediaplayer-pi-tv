@@ -62,8 +62,8 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
 
   useEffect(() => {
     const tiposPermitidosPorRegiao = { 
-      1: ['video', 'imagem'], 
-      2: ['video', 'imagem'], 
+      1: ['video', 'imagem', 'youtube'], 
+      2: ['video', 'imagem', 'youtube'], 
       4: ['texto'] 
     };
     const tiposPermitidos = tiposPermitidosPorRegiao[formData.regiao] || [];
