@@ -6,6 +6,7 @@ export default function PhotoRegion({ content, onImageComplete }) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
+    console.log('🖼️ PhotoRegion: Conteúdo recebido:', content);
     if (content) {
       setError(false);
       setImageLoaded(false);

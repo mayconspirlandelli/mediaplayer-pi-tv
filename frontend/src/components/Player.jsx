@@ -7,29 +7,76 @@ import VideoRegion from './VideoRegion';
 import WeatherRegion from './WeatherRegion';
 
 export default function Player() {
-  const [content, setContent] = useState(null);
+  const [videoContent, setVideoContent] = useState(null);
+  const [photoContent, setPhotoContent] = useState(null);
+  const [textContent, setTextContent] = useState(null);
   const [weather, setWeather] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Função para forçar atualização de conteúdo
-  const refreshContent = () => {
-    setRefreshKey(prev => prev + 1);
+  // Estados para gatilhos de atualização independentes
+  const [refreshVideoKey, setRefreshVideoKey] = useState(0);
+  const [refreshPhotoKey, setRefreshPhotoKey] = useState(0);
+  const [refreshTextKey, setRefreshTextKey] = useState(0);
+
+  const refreshVideo = () => {
+    console.log('🔄 Player: Solicitando atualização de VÍDEO');
+    setRefreshVideoKey(prev => prev + 1);
+  };
+  
+  const refreshPhoto = () => {
+    console.log('🔄 Player: Solicitando atualização de IMAGEM');
+    setRefreshPhotoKey(prev => prev + 1);
+  };
+  
+  const refreshText = () => {
+    console.log('🔄 Player: Solicitando atualização de TEXTO');
+    setRefreshTextKey(prev => prev + 1);
   };
 
-  // Buscar conteúdo ativo
+  // Buscar conteúdo de vídeo (Região 1)
   useEffect(() => {
-    const fetchContent = async () => {
+    const fetchVideo = async () => {
       try {
-        const data = await api.getActiveContent();
-        console.log('📦 Conteúdo recebido da API:', data);
-        setContent(data);
+        const data = await api.getActiveContentByRegion(1);
+        console.log('🎬 Player: Conteúdo de VÍDEO recebido:', data);
+        setVideoContent(data);
       } catch (error) {
-        console.error('Erro ao buscar conteúdo:', error);
+        console.error('❌ Player: Erro ao buscar vídeo:', error);
       }
     };
+    fetchVideo();
+  }, [refreshVideoKey]);
 
-    fetchContent();
-  }, [refreshKey]);
+  // Buscar conteúdo de imagem (Região 2)
+  useEffect(() => {
+    const fetchPhoto = async () => {
+      try {
+        const data = await api.getActiveContentByRegion(2);
+        console.log('🖼️ Player: Conteúdo de IMAGEM recebido:', data);
+        setPhotoContent(data);
+      } catch (error) {
+        console.error('❌ Player: Erro ao buscar imagem:', error);
+      }
+    };
+    fetchPhoto();
+  }, [refreshPhotoKey]);
+
+  // Buscar conteúdo de texto (Região 4)
+  useEffect(() => {
+    const fetchText = async () => {
+      try {
+        const data = await api.getActiveContentByRegion(4);
+        console.log('📝 Player: Conteúdo de TEXTO recebido:', data);
+        setTextContent(data);
+      } catch (error) {
+        console.error('❌ Player: Erro ao buscar texto:', error);
+      }
+    };
+    fetchText();
+
+    // Texto atualiza a cada 1 minuto
+    const interval = setInterval(fetchText, 60000);
+    return () => clearInterval(interval);
+  }, [refreshTextKey]);
 
   // Buscar clima
   useEffect(() => {
@@ -38,13 +85,12 @@ export default function Player() {
         const data = await api.getWeather();
         setWeather(data);
       } catch (error) {
-        console.error('Erro ao buscar clima:', error);
+        console.error('❌ Player: Erro ao buscar clima:', error);
       }
     };
 
     fetchWeather();
-    const interval = setInterval(fetchWeather, 600000); // Atualizar a cada 10 minutos
-
+    const interval = setInterval(fetchWeather, 600000); // 10 minutos
     return () => clearInterval(interval);
   }, []);
 
@@ -53,12 +99,12 @@ export default function Player() {
       <div className="player-grid">
         {/* REGIÃO 1: Vídeos Verticais */}
         <div className="region region-video">
-          <VideoRegion content={content?.video} onVideoEnd={refreshContent} />
+          <VideoRegion content={videoContent} onVideoEnd={refreshVideo} />
         </div>
 
         {/* REGIÃO 2: Imagens */}
         <div className="region region-photo">
-          <PhotoRegion content={content?.imagem} onImageComplete={refreshContent} />
+          <PhotoRegion content={photoContent} onImageComplete={refreshPhoto} />
         </div>
 
         {/* REGIÃO 3: Clima */}
@@ -68,7 +114,7 @@ export default function Player() {
 
         {/* REGIÃO 4: Avisos em Texto */}
         <div className="region region-text">
-          <TextRegion content={content?.texto} />
+          <TextRegion content={textContent} />
         </div>
       </div>
     </div>

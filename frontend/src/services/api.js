@@ -7,6 +7,11 @@ export const api = {
     return response.json();
   },
 
+  async getActiveContentByRegion(regiao) {
+    const response = await fetch(`${API_BASE}/player/active-content/region/${regiao}`);
+    return response.json();
+  },
+
   async getWeather() {
     const response = await fetch(`${API_BASE}/player/weather`);
     return response.json();
