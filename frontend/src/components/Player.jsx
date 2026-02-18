@@ -73,9 +73,7 @@ export default function Player() {
     };
     fetchText();
 
-    // Texto atualiza a cada 1 minuto
-    const interval = setInterval(fetchText, 60000);
-    return () => clearInterval(interval);
+    // Removido o setInterval pois agora o TextRegion gerencia sua própria rotação via refreshText
   }, [refreshTextKey]);
 
   // Buscar clima
@@ -114,7 +112,7 @@ export default function Player() {
 
         {/* REGIÃO 4: Avisos em Texto */}
         <div className="region region-text">
-          <TextRegion content={textContent} />
+          <TextRegion content={textContent} onTextComplete={refreshText} />
         </div>
       </div>
     </div>

@@ -267,9 +267,14 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
                 </span>
               </td>
               <td>
-                <button className="btn btn-danger" onClick={() => onDelete(s.id)}>
-                  🗑️
-                </button>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <button className="btn btn-primary" onClick={() => onEdit(s)} style={{ padding: '5px 10px', fontSize: '14px' }}>
+                    ✏️
+                  </button>
+                  <button className="btn btn-danger" onClick={() => onDelete(s.id)} style={{ padding: '5px 10px', fontSize: '14px' }}>
+                    🗑️
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

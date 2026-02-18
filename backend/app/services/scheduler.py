@@ -64,7 +64,7 @@ class SchedulerService:
                 Schedule.hora_inicio <= current_time,
                 Schedule.hora_fim >= current_time
             )
-        ).order_by(Schedule.prioridade.asc(), Schedule.id).all()  # ASC = ordem crescente
+        ).order_by(Schedule.prioridade.asc(), Schedule.id.desc()).all()  # ASC = ordem crescente, ID DESC = mais recente primeiro
         
         # Filtrar por dia da semana
         valid_schedules = []

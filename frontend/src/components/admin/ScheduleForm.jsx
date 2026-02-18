@@ -33,8 +33,31 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
         prioridade: schedule.prioridade,
         ativo: schedule.ativo
       });
+
+      // Se for região de texto, carregar o texto da mídia
+      if (schedule.regiao === 4) {
+        const mediaCorrespondente = media.find(m => m.id === schedule.media_id);
+        if (mediaCorrespondente && mediaCorrespondente.texto) {
+          setTextoAviso(mediaCorrespondente.texto);
+        }
+      }
+    } else {
+      // Resetar formulário se não houver agendamento selecionado
+      setFormData({
+        media_id: '',
+        regiao: 1,
+        data_inicio: new Date().toISOString().split('T')[0],
+        data_fim: new Date().toISOString().split('T')[0],
+        hora_inicio: '08:00',
+        hora_fim: '18:00',
+        duracao: 10,
+        dias_semana: '0,1,2,3,4,5,6',
+        prioridade: 1,
+        ativo: true
+      });
+      setTextoAviso('');
     }
-  }, [schedule]);
+  }, [schedule, media]);
 
   useEffect(() => {
     const tipoRegiao = { 1: 'video', 2: 'imagem', 4: 'texto' };
@@ -43,10 +66,13 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
     console.log('🔍 Filtrando mídias para região:', formData.regiao);
     console.log('🔍 Tipo esperado:', tipoEsperado);
     
-    // Se for região 4, não precisa filtrar mídias (será criada automaticamente)
+    // Se for região 4, não precisa filtrar mídias (será criada/editada automaticamente)
     if (formData.regiao === 4) {
       setFilteredMedia([]);
-      setFormData(prev => ({ ...prev, media_id: '' }));
+      // Só limpar se não for uma edição
+      if (!schedule) {
+        setFormData(prev => ({ ...prev, media_id: '' }));
+      }
       return;
     }
     
@@ -97,12 +123,12 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
     console.log('📝 Região selecionada:', formData.regiao);
     console.log('📝 Mídia selecionada:', formData.media_id);
     console.log('📝 Duração:', formData.duracao, 'segundos');
-    console.log('📝 Ordem (prioridade):', formData.prioridade);
+    console.log('📝 Ordem:', formData.prioridade);
 
     try {
       let mediaId = formData.media_id;
 
-      // Se for região 4 (texto/aviso), criar mídia de texto automaticamente
+      // Se for região 4 (texto/aviso), gerenciar mídia de texto
       if (formData.regiao === 4) {
         if (!textoAviso.trim()) {
           alert('Por favor, digite o texto do aviso!');
@@ -110,11 +136,20 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           return;
         }
 
-        console.log('📢 Criando mídia de texto para aviso:', textoAviso);
-        const nomeAviso = `Aviso ${new Date().toLocaleString('pt-BR')}`;
-        const mediaCriada = await api.createTextMedia(nomeAviso, textoAviso);
-        console.log('✅ Mídia de texto criada:', mediaCriada);
-        mediaId = mediaCriada.id;
+        if (schedule && schedule.media_id) {
+          console.log('📢 Atualizando mídia de texto existente ID:', schedule.media_id);
+          await api.updateMedia(schedule.media_id, { 
+            texto: textoAviso,
+            nome: `Aviso (Editado) ${new Date().toLocaleDateString('pt-BR')}`
+          });
+          mediaId = schedule.media_id;
+        } else {
+          console.log('📢 Criando nova mídia de texto para aviso:', textoAviso);
+          const nomeAviso = `Aviso ${new Date().toLocaleString('pt-BR')}`;
+          const mediaCriada = await api.createTextMedia(nomeAviso, textoAviso);
+          console.log('✅ Mídia de texto criada:', mediaCriada);
+          mediaId = mediaCriada.id;
+        }
       }
 
       const dadosAgendamento = { ...formData, media_id: mediaId };
@@ -160,10 +195,15 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
                   className="form-control"
                   value={textoAviso}
                   onChange={(e) => {
-                    if (e.target.value.length <= MAX_CARACTERES) {
-                      setTextoAviso(e.target.value);
+                    const text = e.target.value;
+                    if (text.length <= MAX_CARACTERES) {
+                      setTextoAviso(text);
+                    } else {
+                      // Truncar para o limite máximo se ultrapassar (ex: no colar)
+                      setTextoAviso(text.substring(0, MAX_CARACTERES));
                     }
                   }}
+                  autoFocus={!!schedule}
                   placeholder="Digite o texto do aviso aqui..."
                   rows="4"
                   style={{resize: 'vertical', fontFamily: 'inherit'}}

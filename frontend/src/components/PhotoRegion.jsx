@@ -59,20 +59,31 @@ export default function PhotoRegion({ content, onImageComplete }) {
           <div className="spinner"></div>
         </div>
       )}
+      
+      {/* Imagem de Fundo (Borrada) para preencher espaços */}
       <img
-        key={content.id}
         src={`/${content.caminho_arquivo}`}
-        alt={content.nome}
-        className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
-        onLoad={() => {
-          console.log('🖼️ Imagem carregou:', content.nome);
-          setImageLoaded(true);
-        }}
-        onError={() => {
-          console.error('🖼️ Erro ao carregar imagem:', content.nome);
-          setError(true);
-        }}
+        alt=""
+        className={`photo-background ${imageLoaded ? 'loaded' : ''}`}
       />
+
+      {/* Imagem Principal (Mantendo Proporção) */}
+      <div className="photo-foreground">
+        <img
+          key={content.id}
+          src={`/${content.caminho_arquivo}`}
+          alt={content.nome}
+          className={`photo-image ${imageLoaded ? 'loaded' : ''}`}
+          onLoad={() => {
+            console.log('🖼️ Imagem carregou:', content.nome);
+            setImageLoaded(true);
+          }}
+          onError={() => {
+            console.error('🖼️ Erro ao carregar imagem:', content.nome);
+            setError(true);
+          }}
+        />
+      </div>
     </div>
   );
 }

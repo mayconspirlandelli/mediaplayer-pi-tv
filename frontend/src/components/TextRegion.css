@@ -40,7 +40,8 @@
 }
 
 .text-content.scrolling {
-  animation: scroll-text 50s linear infinite;
+  animation: scroll-text 60s linear infinite;
+  display: inline-block;
 }
 
 @keyframes scroll-text {
