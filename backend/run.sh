@@ -8,11 +8,11 @@ echo ""
 cd "$(dirname "$0")"
 
 # Ativar ambiente virtual
-if [ -d "venv" ]; then
-  source venv/bin/activate
+if [ -d ".venv" ]; then
+  source .venv/bin/activate
 else
   echo "❌ Ambiente virtual não encontrado!"
-  echo "Execute: python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+  echo "Execute: python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
   exit 1
 fi
 

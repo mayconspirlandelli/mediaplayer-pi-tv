@@ -141,8 +141,8 @@ class SchedulerService:
         
         # Validar tipo de mídia vs região
         tipo_regiao = {
-            1: ["video", "imagem", "youtube"],
-            2: ["video", "imagem", "youtube"],
+            1: ["video", "imagem", "youtube", "link"],
+            2: ["video", "imagem", "youtube", "link"],
             4: ["texto"]
         }
         

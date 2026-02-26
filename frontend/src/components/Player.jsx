@@ -1,64 +1,63 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '../services/api';
-import PhotoRegion from './PhotoRegion';
 import './Player.css';
 import TextRegion from './TextRegion';
-import VideoRegion from './VideoRegion';
+import UniversalRegion from './UniversalRegion';
 import WeatherRegion from './WeatherRegion';
 
 export default function Player() {
-  const [videoContent, setVideoContent] = useState(null);
-  const [photoContent, setPhotoContent] = useState(null);
+  const [verticalContent, setVerticalContent] = useState(null);
+  const [horizontalContent, setHorizontalContent] = useState(null);
   const [textContent, setTextContent] = useState(null);
   const [weather, setWeather] = useState(null);
 
   // Estados para gatilhos de atualização independentes
-  const [refreshVideoKey, setRefreshVideoKey] = useState(0);
-  const [refreshPhotoKey, setRefreshPhotoKey] = useState(0);
+  const [refreshVerticalKey, setRefreshVerticalKey] = useState(0);
+  const [refreshHorizontalKey, setRefreshHorizontalKey] = useState(0);
   const [refreshTextKey, setRefreshTextKey] = useState(0);
 
-  const refreshVideo = () => {
-    console.log('🔄 Player: Solicitando atualização de VÍDEO');
-    setRefreshVideoKey(prev => prev + 1);
-  };
-  
-  const refreshPhoto = () => {
-    console.log('🔄 Player: Solicitando atualização de IMAGEM');
-    setRefreshPhotoKey(prev => prev + 1);
-  };
-  
-  const refreshText = () => {
-    console.log('🔄 Player: Solicitando atualização de TEXTO');
-    setRefreshTextKey(prev => prev + 1);
-  };
+  const refreshVertical = useCallback(() => {
+    console.log('🔄 Player: Solicitando atualização REGIONAL VERTICAL (Região 1)');
+    setRefreshVerticalKey(prev => prev + 1);
+  }, []);
 
-  // Buscar conteúdo de vídeo (Região 1)
+  const refreshHorizontal = useCallback(() => {
+    console.log('🔄 Player: Solicitando atualização REGIONAL HORIZONTAL (Região 2)');
+    setRefreshHorizontalKey(prev => prev + 1);
+  }, []);
+
+  const refreshText = useCallback(() => {
+    console.log('🔄 Player: Solicitando atualização de TEXTO (Região 4)');
+    setRefreshTextKey(prev => prev + 1);
+  }, []);
+
+  // Buscar conteúdo VERTICAL (Região 1)
   useEffect(() => {
-    const fetchVideo = async () => {
+    const fetchVertical = async () => {
       try {
         const data = await api.getActiveContentByRegion(1);
-        console.log('🎬 Player: Conteúdo de VÍDEO recebido:', data);
-        setVideoContent(data);
+        console.log('🎬 Player: Conteúdo VERTICAL recebido:', data);
+        setVerticalContent(data);
       } catch (error) {
-        console.error('❌ Player: Erro ao buscar vídeo:', error);
+        console.error('❌ Player: Erro ao buscar vertical:', error);
       }
     };
-    fetchVideo();
-  }, [refreshVideoKey]);
+    fetchVertical();
+  }, [refreshVerticalKey]);
 
-  // Buscar conteúdo de imagem (Região 2)
+  // Buscar conteúdo HORIZONTAL (Região 2)
   useEffect(() => {
-    const fetchPhoto = async () => {
+    const fetchHorizontal = async () => {
       try {
         const data = await api.getActiveContentByRegion(2);
-        console.log('🖼️ Player: Conteúdo de IMAGEM recebido:', data);
-        setPhotoContent(data);
+        console.log('🖼️ Player: Conteúdo HORIZONTAL recebido:', data);
+        setHorizontalContent(data);
       } catch (error) {
-        console.error('❌ Player: Erro ao buscar imagem:', error);
+        console.error('❌ Player: Erro ao buscar horizontal:', error);
       }
     };
-    fetchPhoto();
-  }, [refreshPhotoKey]);
+    fetchHorizontal();
+  }, [refreshHorizontalKey]);
 
   // Buscar conteúdo de texto (Região 4)
   useEffect(() => {
@@ -72,9 +71,19 @@ export default function Player() {
       }
     };
     fetchText();
-
-    // Removido o setInterval pois agora o TextRegion gerencia sua própria rotação via refreshText
   }, [refreshTextKey]);
+
+  // Efeito de polling para regiões vazias ou verificação periódica
+  useEffect(() => {
+    const checkStatus = () => {
+      if (!verticalContent) refreshVertical();
+      if (!horizontalContent) refreshHorizontal();
+      if (!textContent) refreshText();
+    };
+
+    const interval = setInterval(checkStatus, 15000);
+    return () => clearInterval(interval);
+  }, [verticalContent, horizontalContent, textContent, refreshVertical, refreshHorizontal, refreshText]);
 
   // Buscar clima
   useEffect(() => {
@@ -95,14 +104,24 @@ export default function Player() {
   return (
     <div className="player-container">
       <div className="player-grid">
-        {/* REGIÃO 1: Vídeos Verticais */}
-        <div className="region region-video">
-          <VideoRegion key={`video-${refreshVideoKey}`} content={videoContent} onVideoEnd={refreshVideo} />
+        {/* REGIÃO 1: Formato Vertical */}
+        <div className="region region-vertical">
+          <UniversalRegion
+            key={`vertical-${refreshVerticalKey}-${verticalContent?.id || 'none'}`}
+            content={verticalContent}
+            onComplete={refreshVertical}
+            regionName="Vertical"
+          />
         </div>
 
-        {/* REGIÃO 2: Imagens */}
-        <div className="region region-photo">
-          <PhotoRegion key={`photo-${refreshPhotoKey}`} content={photoContent} onImageComplete={refreshPhoto} />
+        {/* REGIÃO 2: Formato Horizontal */}
+        <div className="region region-horizontal">
+          <UniversalRegion
+            key={`horizontal-${refreshHorizontalKey}-${horizontalContent?.id || 'none'}`}
+            content={horizontalContent}
+            onComplete={refreshHorizontal}
+            regionName="Horizontal"
+          />
         </div>
 
         {/* REGIÃO 3: Clima */}
@@ -112,7 +131,11 @@ export default function Player() {
 
         {/* REGIÃO 4: Avisos em Texto */}
         <div className="region region-text">
-          <TextRegion key={`text-${refreshTextKey}`} content={textContent} onTextComplete={refreshText} />
+          <TextRegion
+            key={`text-${refreshTextKey}-${textContent?.id || 'none'}`}
+            content={textContent}
+            onTextComplete={refreshText}
+          />
         </div>
       </div>
     </div>

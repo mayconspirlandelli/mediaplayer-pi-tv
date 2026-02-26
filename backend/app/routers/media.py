@@ -191,6 +191,35 @@ async def create_youtube_media(
         "message": "Link do YouTube cadastrado com sucesso"
     }
 
+@router.post("/link")
+async def create_link_media(
+    nome: str = Form(...),
+    url: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Cria uma mídia de link genérico (Instagram, TikTok, etc.)"""
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL é obrigatória")
+    
+    media = Media(
+        tipo="link",
+        nome=nome,
+        caminho_arquivo=url,
+        ativo=True
+    )
+    db.add(media)
+    db.commit()
+    db.refresh(media)
+    
+    return {
+        "id": media.id,
+        "tipo": media.tipo,
+        "nome": media.nome,
+        "url": media.caminho_arquivo,
+        "message": "Link cadastrado com sucesso"
+    }
+
 @router.put("/{media_id}")
 async def update_media(
     media_id: int,

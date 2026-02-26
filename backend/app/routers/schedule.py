@@ -38,7 +38,7 @@ async def list_schedules(
     db: Session = Depends(get_db)
 ):
     """Lista todos os agendamentos com filtros opcionais"""
-    query = db.query(Schedule).join(Media)
+    query = db.query(Schedule)
     
     if regiao:
         query = query.filter(Schedule.regiao == regiao)

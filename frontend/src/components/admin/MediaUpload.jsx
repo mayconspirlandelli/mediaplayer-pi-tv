@@ -29,6 +29,12 @@ export default function MediaUpload({ onUploaded }) {
           return;
         }
         await api.createYoutubeMedia(nome, texto);
+      } else if (tipo === 'link') {
+        if (!texto.startsWith('http')) {
+          alert('Por favor, insira uma URL válida');
+          return;
+        }
+        await api.createLinkMedia(nome, texto);
       } else {
         if (!file) {
           alert('Selecione um arquivo');
@@ -36,7 +42,7 @@ export default function MediaUpload({ onUploaded }) {
         }
         await api.uploadMedia(file, tipo, nome);
       }
-      
+
       alert('Mídia criada com sucesso!');
       setNome('');
       setTexto('');
@@ -57,6 +63,7 @@ export default function MediaUpload({ onUploaded }) {
           <select className="form-control" value={tipo} onChange={(e) => setTipo(e.target.value)}>
             <option value="video">Vídeo Local</option>
             <option value="youtube">Vídeo YouTube (Link)</option>
+            <option value="link">Link Externo (Instagram, TikTok, etc.)</option>
             <option value="imagem">Imagem</option>
             <option value="texto">Texto</option>
           </select>
@@ -85,18 +92,18 @@ export default function MediaUpload({ onUploaded }) {
               placeholder="Digite o texto do aviso aqui..."
             />
           </div>
-        ) : tipo === 'youtube' ? (
+        ) : (tipo === 'youtube' || tipo === 'link') ? (
           <div className="form-group">
-            <label>Link do YouTube</label>
+            <label>{tipo === 'youtube' ? 'Link do YouTube' : 'Link Social (Instagram, TikTok, etc.)'}</label>
             <input
               type="url"
               className="form-control"
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
               required
-              placeholder="https://www.youtube.com/watch?v=..."
+              placeholder={tipo === 'youtube' ? "https://www.youtube.com/watch?v=..." : "https://instagram.com/p/..."}
             />
-            <small style={{color: '#64748b', marginTop: '5px', display: 'block'}}>
+            <small style={{ color: '#64748b', marginTop: '5px', display: 'block' }}>
               Dica: Cole o link completo do navegador.
             </small>
           </div>
@@ -106,17 +113,17 @@ export default function MediaUpload({ onUploaded }) {
             <div className="upload-area" onClick={() => document.getElementById('file-input').click()}>
               {file ? (
                 <div>
-                  <div style={{fontSize: '48px', marginBottom: '10px'}}>✓</div>
+                  <div style={{ fontSize: '48px', marginBottom: '10px' }}>✓</div>
                   <div>{file.name}</div>
-                  <div style={{fontSize: '14px', color: '#64748b', marginTop: '8px'}}>
+                  <div style={{ fontSize: '14px', color: '#64748b', marginTop: '8px' }}>
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </div>
                 </div>
               ) : (
                 <div>
-                  <div style={{fontSize: '48px', marginBottom: '10px'}}>📁</div>
+                  <div style={{ fontSize: '48px', marginBottom: '10px' }}>📁</div>
                   <div>Clique para selecionar arquivo</div>
-                  <div style={{fontSize: '14px', color: '#64748b', marginTop: '8px'}}>
+                  <div style={{ fontSize: '14px', color: '#64748b', marginTop: '8px' }}>
                     {tipo === 'video' ? 'MP4, WebM, AVI' : 'JPG, PNG, WebP'}
                   </div>
                 </div>

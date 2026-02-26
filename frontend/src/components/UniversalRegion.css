@@ -1,0 +1,120 @@
+.universal-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Background Blur Effect */
+.universal-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(20px) brightness(0.5);
+    transform: scale(1.1);
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1;
+}
+
+.universal-background.loaded {
+    opacity: 0.7;
+}
+
+/* Foreground Media */
+.universal-foreground {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.universal-media {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.universal-media.loaded {
+    opacity: 1;
+}
+
+/* Embed Frames */
+.embed-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: #000;
+}
+
+/* Loading States */
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-left-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* No Content States */
+.no-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #64748b;
+    text-align: center;
+}
+
+.no-content .icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.no-content.error {
+    background: linear-gradient(135deg, #450a0a 0%, #180303 100%);
+    color: #ef4444;
+}
+
+.no-content .small {
+    font-size: 12px;
+    margin-top: 5px;
+    opacity: 0.7;
+}
+
+/* Especial for TikTok Embed v2 */
+.tiktok-embed {
+    margin: 0 !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+}

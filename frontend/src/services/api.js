@@ -65,6 +65,18 @@ export const api = {
     return response.json();
   },
 
+  async createLinkMedia(nome, url) {
+    const formData = new FormData();
+    formData.append('nome', nome);
+    formData.append('url', url);
+
+    const response = await fetch(`${API_BASE}/media/link`, {
+      method: 'POST',
+      body: formData
+    });
+    return response.json();
+  },
+
   async updateMedia(id, data) {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
@@ -92,7 +104,7 @@ export const api = {
 
   // Schedule endpoints
   async getSchedules(regiao = null) {
-    const url = regiao 
+    const url = regiao
       ? `${API_BASE}/schedule/?regiao=${regiao}`
       : `${API_BASE}/schedule/`;
     const response = await fetch(url);
@@ -107,7 +119,7 @@ export const api = {
   async createSchedule(data) {
     console.log('🌐 API: Enviando POST para /api/schedule/');
     console.log('🌐 API: Dados enviados:', JSON.stringify(data, null, 2));
-    
+
     const response = await fetch(`${API_BASE}/schedule/`, {
       method: 'POST',
       headers: {
@@ -115,15 +127,15 @@ export const api = {
       },
       body: JSON.stringify(data)
     });
-    
+
     const result = await response.json();
     console.log('🌐 API: Status da resposta:', response.status);
     console.log('🌐 API: Dados recebidos:', result);
-    
+
     if (!response.ok) {
       throw new Error(result.detail || 'Erro ao criar agendamento');
     }
-    
+
     return result;
   },
 

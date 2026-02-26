@@ -8,7 +8,9 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
   const [dragOverItem, setDragOverItem] = useState(null);
 
   const getRegiaoNome = (regiao) => {
-    return regiao === 1 ? 'Vídeo' : regiao === 2 ? 'Imagem' : 'Texto';
+    if (regiao === 1) return 'Vertical';
+    if (regiao === 2) return 'Horizontal';
+    return 'Texto';
   };
 
   const handleSort = (column) => {
@@ -77,11 +79,11 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
   const handleDragStart = (e, schedule) => {
     console.log('🎯 Drag Start:', schedule.media_nome);
     setDraggedItem(schedule);
-    
+
     // Essencial para o Firefox e para definir o que está sendo movido
     e.dataTransfer.setData('text/plain', schedule.id.toString());
     e.dataTransfer.effectAllowed = 'move';
-    
+
     // Adicionar classe visual à linha arrastada (opcional, via pointer-events ou opacity)
   };
 
@@ -97,7 +99,7 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
 
   const handleDragOver = (e, schedule) => {
     e.preventDefault(); // Necessário para permitir o drop
-    
+
     if (draggedItem && draggedItem.id !== schedule.id) {
       if (draggedItem.regiao === schedule.regiao) {
         e.dataTransfer.dropEffect = 'move';
@@ -119,9 +121,9 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
   const handleDrop = async (e, targetSchedule) => {
     e.preventDefault();
     setDragOverItem(null);
-    
+
     console.log('📍 Drop em:', targetSchedule.media_nome);
-    
+
     if (!draggedItem || draggedItem.id === targetSchedule.id) {
       setDraggedItem(null);
       return;
@@ -138,7 +140,7 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
     const sameRegionSchedules = schedules
       .filter(s => s.regiao === draggedItem.regiao)
       .sort((a, b) => a.prioridade - b.prioridade);
-    
+
     const draggedIndex = sameRegionSchedules.findIndex(s => s.id === draggedItem.id);
     const targetIndex = sameRegionSchedules.findIndex(s => s.id === targetSchedule.id);
 
@@ -185,10 +187,10 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
 
   return (
     <div className="schedule-table">
-      <div style={{ 
-        padding: '10px', 
-        backgroundColor: '#e3f2fd', 
-        borderRadius: '4px', 
+      <div style={{
+        padding: '10px',
+        backgroundColor: '#e3f2fd',
+        borderRadius: '4px',
         marginBottom: '10px',
         fontSize: '14px',
         color: '#1565c0'
@@ -224,9 +226,9 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
           </tr>
         </thead>
         <tbody>
-          {sortedSchedules.map(s => (
-            <tr 
-              key={s.id}
+          {sortedSchedules.map((s, index) => (
+            <tr
+              key={`${s.id}-${index}`}
               onDragEnter={(e) => handleDragEnter(e, s)}
               onDragOver={(e) => handleDragOver(e, s)}
               onDragLeave={handleDragLeave}
@@ -237,12 +239,12 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
                 transition: 'all 0.2s'
               }}
             >
-              <td 
+              <td
                 draggable
                 onDragStart={(e) => handleDragStart(e, s)}
                 onDragEnd={handleDragEnd}
-                style={{ 
-                  cursor: 'grab', 
+                style={{
+                  cursor: 'grab',
                   textAlign: 'center',
                   fontSize: '18px',
                   color: '#666',

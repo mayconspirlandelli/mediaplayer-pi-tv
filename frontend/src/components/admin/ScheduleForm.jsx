@@ -20,11 +20,31 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
   const MAX_CARACTERES = 200;
 
 
+  // Efeito unificado para carregar dados e filtrar mídias
   useEffect(() => {
+    // 1. Definir os tipos permitidos com base na região atual
+    const tiposPermitidosPorRegiao = {
+      1: ['video', 'imagem', 'youtube', 'link'],
+      2: ['video', 'imagem', 'youtube', 'link'],
+      4: ['texto']
+    };
+
+    // 2. Se temos um agendamento (MODO EDIÇÃO)
     if (schedule) {
+      console.log('✏️ ScheduleForm: Carregando agendamento (ID:', schedule.id, ')');
+
+      const currentRegiao = parseInt(schedule.regiao, 10);
+      const currentMediaId = parseInt(schedule.media_id, 10);
+      const tipos = tiposPermitidosPorRegiao[currentRegiao] || [];
+
+      // Filtrar mídias compatíveis
+      const filtered = media.filter(m => tipos.includes(m.tipo) && m.ativo);
+      setFilteredMedia(filtered);
+
+      // Atualizar formulário com dados do agendamento
       setFormData({
-        media_id: schedule.media_id,
-        regiao: schedule.regiao,
+        media_id: currentMediaId,
+        regiao: currentRegiao,
         data_inicio: schedule.data_inicio,
         data_fim: schedule.data_fim,
         hora_inicio: schedule.hora_inicio,
@@ -35,85 +55,47 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
         ativo: schedule.ativo
       });
 
-      // Se for região de texto, carregar o texto da mídia
-      if (schedule.regiao === 4) {
-        const mediaCorrespondente = media.find(m => m.id === schedule.media_id);
-        if (mediaCorrespondente && mediaCorrespondente.texto) {
-          setTextoAviso(mediaCorrespondente.texto);
-        }
+      // Carregar texto se for região 4
+      if (currentRegiao === 4) {
+        const mediaObj = media.find(m => m.id === currentMediaId);
+        if (mediaObj) setTextoAviso(mediaObj.texto || '');
       }
-    } else {
-      // Resetar formulário se não houver agendamento selecionado
-      setFormData({
-        media_id: '',
-        regiao: 1,
-        data_inicio: new Date().toISOString().split('T')[0],
-        data_fim: new Date().toISOString().split('T')[0],
-        hora_inicio: '08:00',
-        hora_fim: '18:00',
-        duracao: 10,
-        dias_semana: '0,1,2,3,4,5,6',
-        prioridade: 1,
-        ativo: true
-      });
-      setTextoAviso('');
     }
-  }, [schedule, media]);
+    // 3. Se NÃO temos agendamento (MODO NOVO)
+    else {
+      console.log('➕ ScheduleForm: Modo Novo Agendamento');
 
-  useEffect(() => {
-    const tiposPermitidosPorRegiao = { 
-      1: ['video', 'imagem', 'youtube'], 
-      2: ['video', 'imagem', 'youtube'], 
-      4: ['texto'] 
-    };
-    const tiposPermitidos = tiposPermitidosPorRegiao[formData.regiao] || [];
-    
-    console.log('🔍 Filtrando mídias para região:', formData.regiao);
-    console.log('🔍 Tipos permitidos:', tiposPermitidos);
-    
-    // Se for região 4, não precisa filtrar mídias (será criada/editada automaticamente)
-    if (formData.regiao === 4) {
-      setFilteredMedia([]);
-      // Só limpar se não for uma edição
-      if (!schedule) {
-        setFormData(prev => ({ ...prev, media_id: '' }));
-      }
-      return;
-    }
-    
-    const filtered = media.filter(m => {
-      const isCompativel = tiposPermitidos.includes(m.tipo) && m.ativo;
-      console.log(`  - Mídia "${m.nome}" (tipo: ${m.tipo}): ${isCompativel ? '✅ compatível' : '❌ incompatível'}`);
-      return isCompativel;
-    });
-    
-    console.log('🔍 Total de mídias compatíveis:', filtered.length);
-    setFilteredMedia(filtered);
-    
-    // Se mudou a região ou não tem mídia selecionada, selecionar a primeira disponível
-    if (filtered.length > 0) {
-      const mediaSelecionadaValida = filtered.find(m => m.id === formData.media_id);
-      if (!mediaSelecionadaValida) {
-        console.log('🔄 Selecionando automaticamente primeira mídia compatível:', filtered[0].nome);
+      const defaultRegiao = formData.regiao || 1;
+      const tipos = tiposPermitidosPorRegiao[defaultRegiao] || [];
+      const filtered = media.filter(m => tipos.includes(m.tipo) && m.ativo);
+      setFilteredMedia(filtered);
+
+      // Só resetar campos de data/hora se o form estiver vazio
+      if (!formData.data_inicio) {
+        setFormData(prev => ({
+          ...prev,
+          data_inicio: new Date().toISOString().split('T')[0],
+          data_fim: new Date().toISOString().split('T')[0],
+          media_id: filtered.length > 0 ? filtered[0].id : ''
+        }));
+      } else if (formData.regiao !== 4 && filtered.length > 0 && !filtered.some(m => m.id === formData.media_id)) {
+        // Se mudou de região e a mídia atual não serve, pega a primeira
         setFormData(prev => ({ ...prev, media_id: filtered[0].id }));
       }
-    } else {
-      console.warn('⚠️ Nenhuma mídia compatível encontrada!');
-      setFormData(prev => ({ ...prev, media_id: '' }));
     }
-  }, [formData.regiao, media]);
+  }, [schedule, media, formData.regiao]); // Re-executa se o agendamento mudar ou a região for trocada manualmente
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let newValue = type === 'checkbox' ? checked : value;
-    
-    // Converter para número se for o campo 'regiao'
-    if (name === 'regiao') {
+
+    // Converter para número se for o campo 'regiao' ou 'media_id'
+    if (name === 'regiao' || name === 'media_id') {
       newValue = parseInt(value, 10);
     }
-    
-    console.log(`🔄 Campo alterado: ${name} = ${newValue} (tipo: ${typeof newValue})`);
-    
+
+    console.log(`🔄 ScheduleForm: Campo alterado: ${name} = ${newValue} (tipo: ${typeof newValue})`);
+
     setFormData(prev => ({
       ...prev,
       [name]: newValue
@@ -143,7 +125,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
 
         if (schedule && schedule.media_id) {
           console.log('📢 Atualizando mídia de texto existente ID:', schedule.media_id);
-          await api.updateMedia(schedule.media_id, { 
+          await api.updateMedia(schedule.media_id, {
             texto: textoAviso,
             nome: `Aviso (Editado) ${new Date().toLocaleDateString('pt-BR')}`
           });
@@ -187,11 +169,11 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
             <label>Região</label>
             <select name="regiao" className="form-control" value={formData.regiao} onChange={handleChange}>
               <option value={1}>Região 1 - Vertical</option>
-              <option value={2}>Região 2 - Quadrado</option>
+              <option value={2}>Região 2 - Horizontal</option>
               <option value={4}>Região 4 - Avisos</option>
             </select>
           </div>
-          
+
           <div className="form-group">
             <label>Mídia</label>
             {formData.regiao === 4 ? (
@@ -211,7 +193,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
                   autoFocus={!!schedule}
                   placeholder="Digite o texto do aviso aqui..."
                   rows="4"
-                  style={{resize: 'vertical', fontFamily: 'inherit'}}
+                  style={{ resize: 'vertical', fontFamily: 'inherit' }}
                   required
                 />
                 <small style={{
@@ -234,7 +216,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
                   ))}
                 </select>
                 {filteredMedia.length === 0 && (
-                  <small style={{color: '#f59e0b', display: 'block', marginTop: '5px'}}>
+                  <small style={{ color: '#f59e0b', display: 'block', marginTop: '5px' }}>
                     ⚠️ Faça upload de uma mídia do tipo correto primeiro
                   </small>
                 )}
@@ -264,9 +246,9 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
 
           <div className="form-group">
             <label>
-              Duração (segundos) 
-              {formData.regiao === 1 && filteredMedia.find(m => m.id === formData.media_id)?.tipo === 'video' 
-                ? ' (usado apenas se houver mais de um vídeo)' 
+              Duração (segundos)
+              {formData.regiao === 1 && filteredMedia.find(m => m.id === formData.media_id)?.tipo === 'video'
+                ? ' (usado apenas se houver mais de um vídeo)'
                 : ''}
             </label>
             <input type="number" name="duracao" className="form-control" value={formData.duracao} onChange={handleChange} min="1" />
@@ -275,19 +257,19 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           <div className="form-group">
             <label>Ordem (Execução)</label>
             <input type="number" name="prioridade" className="form-control" value={formData.prioridade} onChange={handleChange} min="1" />
-            <small style={{color: '#6b7280'}}>Ex: 1 executa primeiro, 2 depois, etc.</small>
+            <small style={{ color: '#6b7280' }}>Ex: 1 executa primeiro, 2 depois, etc.</small>
           </div>
         </div>
 
         <div className="form-group">
           <label>Dias da Semana</label>
-          <div style={{display: 'flex', gap: '15px', flexWrap: 'wrap'}}>
+          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
             {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((dia, index) => {
               const dias = formData.dias_semana.split(',').map(Number);
               const isChecked = dias.includes(index);
-              
+
               return (
-                <label key={index} style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
+                <label key={index} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <input
                     type="checkbox"
                     checked={isChecked}
@@ -309,21 +291,21 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
         </div>
 
         <div className="form-group">
-          <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <input type="checkbox" name="ativo" checked={formData.ativo} onChange={handleChange} />
             Agendamento Ativo
           </label>
         </div>
 
         <div className="form-actions">
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className="btn btn-primary"
             disabled={saving || (formData.regiao === 4 ? !textoAviso.trim() : filteredMedia.length === 0)}
           >
             {saving ? 'Salvando...' : '✓ Salvar'}
           </button>
-          <button type="button" className="btn" onClick={onCancel} style={{background: '#e2e8f0'}}>
+          <button type="button" className="btn" onClick={onCancel} style={{ background: '#e2e8f0' }}>
             Cancelar
           </button>
         </div>

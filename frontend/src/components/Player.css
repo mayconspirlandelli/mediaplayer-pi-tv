@@ -41,16 +41,16 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-/* REGIÃO 1: Vídeos (esquerda) */
-.region-video {
+/* REGIÃO 1: Formato Vertical (esquerda) */
+.region-vertical {
   grid-column: 1;
   grid-row: 1;
   width: 440px;
   height: 840px;
 }
 
-/* REGIÃO 2: Imagens (centro) */
-.region-photo {
+/* REGIÃO 2: Formato Horizontal (centro) */
+.region-horizontal {
   grid-column: 2;
   grid-row: 1;
   width: 1040px;

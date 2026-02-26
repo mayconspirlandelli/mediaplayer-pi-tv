@@ -128,7 +128,7 @@ export default function AdminPage() {
           <div className="dashboard">
             <h2>Dashboard</h2>
             {stats && <Stats stats={stats} />}
-            
+
             <div className="dashboard-grid">
               <div className="card">
                 <h3>Mídias Recentes</h3>
@@ -151,7 +151,7 @@ export default function AdminPage() {
                   {schedules.slice(0, 5).map(s => (
                     <div key={s.id} className="recent-item">
                       <span className={`type-badge regiao-${s.regiao}`}>
-                        {s.regiao === 1 ? 'Vídeo' : s.regiao === 2 ? 'Imagem' : 'Texto'}
+                        {s.regiao === 1 ? 'Vertical' : s.regiao === 2 ? 'Horizontal' : 'Texto'}
                       </span>
                       <span>{s.media_nome}</span>
                       <span className="schedule-time">
