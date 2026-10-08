@@ -1,7 +1,7 @@
 from datetime import datetime, date, time
 from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from ..models import Media, Schedule
 
 class SchedulerService:
@@ -158,6 +158,30 @@ class SchedulerService:
         
         return True, None
     
+    @staticmethod
+    def deactivate_expired(db: Session, now: Optional[datetime] = None) -> int:
+        """
+        Marca como inativos os agendamentos cujo período já terminou:
+        data_fim anterior a hoje, ou data_fim == hoje e hora_fim já passou.
+        Retorna a quantidade de agendamentos inativados.
+        """
+        now = now or datetime.now()
+        expired = db.query(Schedule).filter(
+            Schedule.ativo == True,
+            or_(
+                Schedule.data_fim < now.date(),
+                and_(Schedule.data_fim == now.date(), Schedule.hora_fim < now.time())
+            )
+        ).all()
+
+        for schedule in expired:
+            schedule.ativo = False
+
+        if expired:
+            db.commit()
+
+        return len(expired)
+
     @staticmethod
     def get_next_content(db: Session, regiao: int, hours_ahead: int = 24) -> List[Dict]:
         """

@@ -19,6 +19,14 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
   const [textoAviso, setTextoAviso] = useState('');
   const MAX_CARACTERES = 200;
 
+  // Nova mídia criada junto com o agendamento (enviada somente ao clicar em Salvar)
+  const [novaMidia, setNovaMidia] = useState(false);
+  const [novoTipo, setNovoTipo] = useState('video');
+  const [novoNome, setNovoNome] = useState('');
+  const [novoArquivo, setNovoArquivo] = useState(null);
+  const [novoLink, setNovoLink] = useState('');
+  const criandoMidia = novaMidia && !schedule && formData.regiao !== 4;
+
 
   // Efeito unificado para carregar dados e filtrar mídias
   useEffect(() => {
@@ -139,6 +147,26 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
         }
       }
 
+      if (criandoMidia) {
+        if (!novoNome.trim()) {
+          alert('Informe o nome da nova mídia.');
+          return;
+        }
+        if (novoTipo === 'link') {
+          if (!/^https?:\/\//i.test(novoLink.trim())) {
+            alert('Informe uma URL válida (começando com http:// ou https://).');
+            return;
+          }
+          mediaId = (await api.createLinkMedia(novoNome.trim(), novoLink.trim())).id;
+        } else {
+          if (!novoArquivo) {
+            alert('Selecione o arquivo da nova mídia.');
+            return;
+          }
+          mediaId = (await api.uploadMedia(novoArquivo, novoTipo, novoNome.trim())).id;
+        }
+      }
+
       const dadosAgendamento = { ...formData, media_id: mediaId };
 
       if (schedule) {
@@ -154,8 +182,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
       if (onSaved) onSaved();
     } catch (error) {
       console.error('❌ Erro ao salvar agendamento:', error);
-      console.error('❌ Detalhes do erro:', error.response?.data);
-      alert('Erro ao salvar: ' + (error.response?.data?.detail || error.message));
+      alert('Erro ao salvar: ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -207,6 +234,62 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
               </div>
             ) : (
               <>
+                {!schedule && (
+                  <div style={{ display: 'flex', gap: '15px', marginBottom: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <input type="radio" checked={!novaMidia} onChange={() => setNovaMidia(false)} />
+                      Mídia existente
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <input type="radio" checked={novaMidia} onChange={() => setNovaMidia(true)} />
+                      Nova mídia
+                    </label>
+                  </div>
+                )}
+
+                {criandoMidia ? (
+                  <div>
+                    <select className="form-control" value={novoTipo} onChange={(e) => { setNovoTipo(e.target.value); setNovoArquivo(null); }}>
+                      <option value="video">Vídeo (upload)</option>
+                      <option value="imagem">Imagem (upload)</option>
+                      <option value="link">Link (YouTube, Instagram, TikTok...)</option>
+                    </select>
+                    <input
+                      type="text"
+                      className="form-control"
+                      style={{ marginTop: '8px' }}
+                      placeholder="Nome da mídia"
+                      value={novoNome}
+                      onChange={(e) => setNovoNome(e.target.value)}
+                    />
+                    {novoTipo === 'link' ? (
+                      <input
+                        type="url"
+                        className="form-control"
+                        style={{ marginTop: '8px' }}
+                        placeholder="https://..."
+                        value={novoLink}
+                        onChange={(e) => setNovoLink(e.target.value)}
+                      />
+                    ) : (
+                      <input
+                        type="file"
+                        className="form-control"
+                        style={{ marginTop: '8px' }}
+                        accept={novoTipo === 'video' ? 'video/*' : 'image/*'}
+                        onChange={(e) => {
+                          const f = e.target.files[0] || null;
+                          setNovoArquivo(f);
+                          if (f && !novoNome) setNovoNome(f.name);
+                        }}
+                      />
+                    )}
+                    <small style={{ display: 'block', marginTop: '5px', color: '#6b7280' }}>
+                      A mídia só é enviada quando você clicar em Salvar.
+                    </small>
+                  </div>
+                ) : (
+                <>
                 <select name="media_id" className="form-control" value={formData.media_id} onChange={handleChange} required>
                   {filteredMedia.length === 0 && <option value="">Nenhuma mídia disponível para esta região</option>}
                   {filteredMedia.map(m => (
@@ -219,6 +302,8 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
                   <small style={{ color: '#f59e0b', display: 'block', marginTop: '5px' }}>
                     ⚠️ Faça upload de uma mídia do tipo correto primeiro
                   </small>
+                )}
+                </>
                 )}
               </>
             )}
@@ -301,7 +386,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={saving || (formData.regiao === 4 ? !textoAviso.trim() : filteredMedia.length === 0)}
+            disabled={saving || (formData.regiao === 4 ? !textoAviso.trim() : !criandoMidia && filteredMedia.length === 0)}
           >
             {saving ? 'Salvando...' : '✓ Salvar'}
           </button>

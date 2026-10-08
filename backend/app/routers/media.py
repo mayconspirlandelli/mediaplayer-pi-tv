@@ -6,8 +6,9 @@ import shutil
 from datetime import datetime
 from ..database import get_db
 from ..models import Media, Schedule
+from ..services.auth import require_auth
 
-router = APIRouter(prefix="/api/media", tags=["media"])
+router = APIRouter(prefix="/api/media", tags=["media"], dependencies=[Depends(require_auth)])
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -45,6 +46,26 @@ async def list_media(
         }
         for m in medias
     ]
+
+@router.get("/stats/summary")
+async def get_stats(db: Session = Depends(get_db)):
+    """Retorna estatísticas gerais das mídias"""
+    total = db.query(Media).count()
+    videos = db.query(Media).filter(Media.tipo == "video").count()
+    imagens = db.query(Media).filter(Media.tipo == "imagem").count()
+    textos = db.query(Media).filter(Media.tipo == "texto").count()
+    youtube = db.query(Media).filter(Media.tipo == "youtube").count()
+    ativos = db.query(Media).filter(Media.ativo == True).count()
+    
+    return {
+        "total": total,
+        "videos": videos,
+        "imagens": imagens,
+        "youtube": youtube,
+        "textos": textos,
+        "ativos": ativos,
+        "inativos": total - ativos
+    }
 
 @router.get("/{media_id}")
 async def get_media(media_id: int, db: Session = Depends(get_db)):
@@ -266,23 +287,3 @@ async def delete_media(media_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Mídia removida com sucesso"}
-
-@router.get("/stats/summary")
-async def get_stats(db: Session = Depends(get_db)):
-    """Retorna estatísticas gerais das mídias"""
-    total = db.query(Media).count()
-    videos = db.query(Media).filter(Media.tipo == "video").count()
-    imagens = db.query(Media).filter(Media.tipo == "imagem").count()
-    textos = db.query(Media).filter(Media.tipo == "texto").count()
-    youtube = db.query(Media).filter(Media.tipo == "youtube").count()
-    ativos = db.query(Media).filter(Media.ativo == True).count()
-    
-    return {
-        "total": total,
-        "videos": videos,
-        "imagens": imagens,
-        "youtube": youtube,
-        "textos": textos,
-        "ativos": ativos,
-        "inativos": total - ativos
-    }

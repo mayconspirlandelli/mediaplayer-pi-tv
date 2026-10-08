@@ -4,10 +4,24 @@ import MediaUpload from '../components/admin/MediaUpload';
 import ScheduleForm from '../components/admin/ScheduleForm';
 import ScheduleList from '../components/admin/ScheduleList';
 import Stats from '../components/admin/Stats';
-import { api } from '../services/api';
+import Login from '../components/Login';
+import { api, auth } from '../services/api';
 import './AdminPage.css';
 
 export default function AdminPage() {
+  const [logged, setLogged] = useState(!!auth.getToken());
+
+  useEffect(() => {
+    const onLogout = () => setLogged(false);
+    window.addEventListener('auth:logout', onLogout);
+    return () => window.removeEventListener('auth:logout', onLogout);
+  }, []);
+
+  if (!logged) return <Login onLogin={() => setLogged(true)} />;
+  return <AdminPanel onLogout={auth.logout} />;
+}
+
+function AdminPanel({ onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [media, setMedia] = useState([]);
   const [schedules, setSchedules] = useState([]);
@@ -81,6 +95,9 @@ export default function AdminPage() {
             <a href="/" target="_blank" className="btn-preview">
               👁️ Ver Player
             </a>
+            <button className="btn-logout" onClick={onLogout}>
+              Sair
+            </button>
           </div>
         </div>
       </header>

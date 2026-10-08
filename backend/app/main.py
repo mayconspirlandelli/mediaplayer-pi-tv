@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 from .database import init_db
-from .routers import media, schedule, player
+from .routers import media, schedule, player, auth
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -31,6 +31,7 @@ app.add_middleware(
 )
 
 # Incluir routers
+app.include_router(auth.router)
 app.include_router(media.router)
 app.include_router(schedule.router)
 app.include_router(player.router)

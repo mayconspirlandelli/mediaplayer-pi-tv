@@ -6,8 +6,9 @@ from typing import Optional, List
 from ..database import get_db
 from ..models import Schedule, Media
 from ..services.scheduler import SchedulerService
+from ..services.auth import require_auth
 
-router = APIRouter(prefix="/api/schedule", tags=["schedule"])
+router = APIRouter(prefix="/api/schedule", tags=["schedule"], dependencies=[Depends(require_auth)])
 
 class ScheduleCreate(BaseModel):
     media_id: int
@@ -37,7 +38,9 @@ async def list_schedules(
     ativo: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
-    """Lista todos os agendamentos com filtros opcionais"""
+    """Lista todos os agendamentos com filtros opcionais (inativa os vencidos antes)"""
+    SchedulerService.deactivate_expired(db)
+
     query = db.query(Schedule)
     
     if regiao:
@@ -69,6 +72,28 @@ async def list_schedules(
         }
         for s in schedules
     ]
+
+@router.put("/reorder")
+async def reorder_schedules(
+    updates: List[dict],
+    db: Session = Depends(get_db)
+):
+    """Atualiza a ordem (prioridade) de múltiplos agendamentos"""
+    try:
+        for update in updates:
+            schedule_id = update.get('id')
+            new_prioridade = update.get('prioridade')
+            
+            if schedule_id and new_prioridade is not None:
+                schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+                if schedule:
+                    schedule.prioridade = new_prioridade
+        
+        db.commit()
+        return {"message": f"{len(updates)} agendamentos reordenados com sucesso"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{schedule_id}")
 async def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
@@ -245,25 +270,3 @@ async def check_conflicts(
         "valid": is_valid,
         "message": error_msg if not is_valid else "Sem conflitos"
     }
-
-@router.put("/reorder")
-async def reorder_schedules(
-    updates: List[dict],
-    db: Session = Depends(get_db)
-):
-    """Atualiza a ordem (prioridade) de múltiplos agendamentos"""
-    try:
-        for update in updates:
-            schedule_id = update.get('id')
-            new_prioridade = update.get('prioridade')
-            
-            if schedule_id and new_prioridade is not None:
-                schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
-                if schedule:
-                    schedule.prioridade = new_prioridade
-        
-        db.commit()
-        return {"message": f"{len(updates)} agendamentos reordenados com sucesso"}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
