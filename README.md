@@ -2,6 +2,12 @@
 
 Sistema completo de media player estilo painel de elevador para Raspberry Pi + Smart TV via HDMI.
 
+O backend e o painel rodam no **Railway**; o Raspberry Pi só abre o player em tela cheia na TV.
+
+- Player: https://mediaplayer.up.railway.app/
+- Admin: https://mediaplayer.up.railway.app/admin
+- 📖 **[Guia de instalação no Raspberry Pi](docs/RASPBERRY_PI.md)**
+
 ## 📋 Características
 
 - ✅ Fullscreen/Kiosk mode automático
@@ -36,9 +42,11 @@ mediaplayer-pi/
 │   ├── package.json
 │   └── vite.config.js
 ├── scripts/              # Scripts de deploy
-│   ├── install.sh
-│   ├── autostart.sh
-│   └── kiosk-setup.sh
+│   ├── install.sh        # Pi: Chromium em kiosk apontando para o Railway
+│   ├── update.sh         # Pi: git pull + reinstala
+│   └── railway-start.sh  # inicialização do container no Railway
+├── docs/                 # SOFTWARE.md, RASPBERRY_PI.md
+├── Dockerfile            # imagem usada no Railway
 └── README.md
 ```
 
@@ -58,33 +66,26 @@ mediaplayer-pi/
 
 ## 🚀 Instalação Rápida
 
-### Pré-requisitos
-- Raspberry Pi 4 (2GB+ RAM)
-- Raspberry Pi OS (64-bit recomendado)
-- Conexão internet (para instalação inicial)
+### Raspberry Pi (tela da TV)
 
-### Instalação Automática
+Siga o **[guia de instalação no Raspberry Pi](docs/RASPBERRY_PI.md)**. Em resumo, no terminal do Pi:
 
 ```bash
-# Clone o projeto
-cd /home/pi
-git clone [seu-repositorio]
-cd mediaplayer-pi
-
-# Execute o instalador
-chmod +x scripts/install.sh
-./scripts/install.sh
+git clone https://github.com/mayconspirlandelli/mediaplayer-pi-tv.git
+cd mediaplayer-pi-tv && sudo ./scripts/install.sh
 ```
 
-O script irá:
-1. Instalar Node.js e Python
-2. Instalar dependências
-3. Configurar banco de dados
-4. Fazer build do frontend
-5. Configurar autostart
-6. Configurar modo kiosk
+Depois ative o login automático na área de trabalho (`sudo raspi-config`) e reinicie. O script instala o Chromium em modo kiosk apontando para o Railway, com autostart no boot.
 
-### Instalação Manual
+### Servidor (Railway)
+
+O `Dockerfile` faz o build do frontend e sobe o FastAPI; banco e uploads ficam no volume `/data`. Para publicar uma nova versão:
+
+```bash
+railway up
+```
+
+### Desenvolvimento local
 
 #### Backend
 ```bash
@@ -106,18 +107,18 @@ npm run build
 
 ### Media Player (Fullscreen)
 ```
-http://localhost:8000
+https://mediaplayer.up.railway.app/
 ```
 
 ### Painel Administrativo
 ```
-http://localhost:8000/admin
+https://mediaplayer.up.railway.app/admin
 ```
 
-### Da rede local
+### Desenvolvimento local
 ```
-http://IP_DO_RASPBERRY:8000
-http://IP_DO_RASPBERRY:8000/admin
+http://localhost:3000        (npm run dev)
+http://localhost:8000        (backend servindo o build)
 ```
 
 ## 🔧 Configuração
@@ -176,20 +177,19 @@ Vídeo Promocional:
 
 ## 🛠️ Manutenção
 
-### Ver logs
+### Ver logs do servidor
 ```bash
-journalctl -u mediaplayer -f
+railway logs
 ```
 
-### Reiniciar serviço
+### Publicar nova versão
 ```bash
-sudo systemctl restart mediaplayer
+railway up
 ```
 
-### Atualizar conteúdo
+### Atualizar os scripts do Raspberry Pi
 ```bash
-cd /home/pi/mediaplayer-pi
-git pull
+cd ~/mediaplayer-pi-tv
 ./scripts/update.sh
 ```
 
@@ -224,24 +224,14 @@ cp backend/mediaplayer.db backend/mediaplayer.db.backup
 
 ## 🔄 Autostart e Kiosk Mode
 
-O sistema está configurado para:
+O `scripts/install.sh` configura o Pi para:
 
-1. Iniciar automaticamente no boot
-2. Abrir em fullscreen (sem bordas)
-3. Desabilitar screensaver
-4. Ocultar cursor do mouse
-5. Reiniciar automaticamente se travar
+1. Abrir o player automaticamente no boot (LXDE, Wayfire e labwc)
+2. Esperar a internet e o servidor antes de abrir o navegador
+3. Abrir em fullscreen (sem bordas) e reabrir se o navegador fechar
+4. Desabilitar o apagamento de tela e ocultar o cursor
 
-### Configuração Manual
-
-Edite `/etc/xdg/lxsession/LXDE-pi/autostart`:
-```bash
-@xset s off
-@xset -dpms
-@xset s noblank
-@chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:8000
-@unclutter -idle 0
-```
+Detalhes e solução de problemas no **[guia do Raspberry Pi](docs/RASPBERRY_PI.md)**.
 
 ## 🌡️ Previsão do Tempo
 
@@ -263,11 +253,8 @@ Otimizações para Raspberry Pi:
 
 ## 🐛 Troubleshooting
 
-### Sistema não inicia
-```bash
-sudo systemctl status mediaplayer
-journalctl -u mediaplayer -n 50
-```
+### Player não abre no Pi
+Veja a seção "Problemas comuns" do [guia do Raspberry Pi](docs/RASPBERRY_PI.md).
 
 ### Vídeos não reproduzem
 - Verifique codec (use H.264)
@@ -275,14 +262,14 @@ journalctl -u mediaplayer -n 50
 - Reconverta: `ffmpeg -i input.mp4 -c:v h264 -c:a aac output.mp4`
 
 ### Clima não atualiza
-- Verifique API key no `.env`
-- Teste: `curl "http://localhost:8000/api/weather"`
-- Verifique logs do backend
+- Verifique `OPENWEATHER_API_KEY` no Railway: `railway variables`
+- Teste: `curl "https://mediaplayer.up.railway.app/api/player/weather"`
+- Verifique logs: `railway logs`
 
 ### Tela fica preta
 - Verifique se há mídia agendada
-- Verifique logs: `journalctl -u mediaplayer -f`
-- Reinicie: `sudo systemctl restart mediaplayer`
+- Verifique logs: `railway logs`
+- Reinicie o Pi: `sudo reboot`
 
 ## 📝 API Endpoints
 
