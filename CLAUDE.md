@@ -33,7 +33,7 @@ pytest tests/            # (run_tests.bat no Windows); test_image_schedule.py ex
 ```
 
 Produção: backend+frontend no **Railway** (`Dockerfile`, `railway.json`, `scripts/railway-start.sh`; banco e uploads no volume `/data`; publicar com `railway up`). URL: https://mediaplayer.up.railway.app/.
-Raspberry Pi = só tela: `sudo ./scripts/install.sh [URL]` instala o Chromium em kiosk apontando para o Railway (autostart LXDE/Wayfire/labwc, espera a rede, reabre se fechar); `scripts/update.sh` faz `git pull` e reaplica.
+Raspberry Pi = só tela: `sudo ./scripts/install.sh [URL]` instala o Chromium em kiosk apontando para o Railway (autostart LXDE/Wayfire/labwc, espera a rede, reabre se fechar); `scripts/update.sh` faz `git pull` e reaplica. Guia de instalação: [docs/RASPBERRY_PI.md](docs/RASPBERRY_PI.md).
 
 ## Estrutura
 

@@ -151,7 +151,7 @@ Mais detalhes em `API.md` na raiz.
 
 **Desenvolvimento**: backend `./run.sh` (8000) + frontend `npm run dev` (3000). Player em `http://localhost:3000/`, admin em `/admin`.
 
-**Raspberry Pi**: `scripts/install.sh` instala o Chromium, cria `/usr/local/bin/mediaplayer-kiosk` (espera a rede/servidor, abre o player em kiosk com `--autoplay-policy=no-user-gesture-required` e reabre se fechar) e o registra no autostart (LXDE, Wayfire e labwc). Remove o serviço local `mediaplayer` de instalações antigas. Atualização com `scripts/update.sh` (git pull + reinstala).
+**Raspberry Pi**: `scripts/install.sh` instala o Chromium, cria `/usr/local/bin/mediaplayer-kiosk` (espera a rede/servidor, abre o player em kiosk com `--autoplay-policy=no-user-gesture-required` e reabre se fechar) e o registra no autostart (LXDE, Wayfire e labwc). Remove o serviço local `mediaplayer` de instalações antigas. Atualização com `scripts/update.sh` (git pull + reinstala). Passo a passo completo em [RASPBERRY_PI.md](RASPBERRY_PI.md).
 
 **Railway**: `Dockerfile` (build do frontend + FastAPI), volume em `/data` para banco e uploads, fuso `America/Sao_Paulo`. Publicar com `railway up`.
 
