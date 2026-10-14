@@ -32,7 +32,8 @@ npm run build            # gera frontend/dist, servido pelo FastAPI em / e /admi
 pytest tests/            # (run_tests.bat no Windows); test_image_schedule.py exige servidor rodando
 ```
 
-Em produção/Pi: `scripts/install.sh` (systemd `mediaplayer.service` + autostart Chromium `--kiosk http://localhost:8000`) e `scripts/update.sh`.
+Produção: backend+frontend no **Railway** (`Dockerfile`, `railway.json`, `scripts/railway-start.sh`; banco e uploads no volume `/data`; publicar com `railway up`). URL: https://mediaplayer.up.railway.app/.
+Raspberry Pi = só tela: `sudo ./scripts/install.sh [URL]` instala o Chromium em kiosk apontando para o Railway (autostart LXDE/Wayfire/labwc, espera a rede, reabre se fechar); `scripts/update.sh` faz `git pull` e reaplica.
 
 ## Estrutura
 
@@ -50,7 +51,7 @@ backend/app/
   services/weather.py    # OpenWeather + cache em banco
 frontend/src/
   App.jsx            # rotas: "/" Player, "/admin" AdminPage
-  components/Player.jsx          # grid 2048x1080, busca conteúdo por região
+  components/Player.jsx          # grid 2048x1080 escalado p/ caber na tela (getStageTransform), busca conteúdo por região
   components/UniversalRegion.jsx # regiões 1 e 2 (vídeo/imagem/youtube/link) — USAR ESTE
   components/TextRegion.jsx, WeatherRegion.jsx
   components/Login.jsx           # tela de login do /admin

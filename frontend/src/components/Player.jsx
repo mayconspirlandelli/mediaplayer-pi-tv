@@ -5,11 +5,29 @@ import TextRegion from './TextRegion';
 import UniversalRegion from './UniversalRegion';
 import WeatherRegion from './WeatherRegion';
 
+// Tamanho de projeto do layout; a tela é escalada para caber em qualquer TV
+const STAGE_WIDTH = 2048;
+const STAGE_HEIGHT = 1080;
+
+function getStageTransform() {
+  const scale = Math.min(window.innerWidth / STAGE_WIDTH, window.innerHeight / STAGE_HEIGHT);
+  const offsetX = (window.innerWidth - STAGE_WIDTH * scale) / 2;
+  const offsetY = (window.innerHeight - STAGE_HEIGHT * scale) / 2;
+  return `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+}
+
 export default function Player() {
   const [verticalContent, setVerticalContent] = useState(null);
   const [horizontalContent, setHorizontalContent] = useState(null);
   const [textContent, setTextContent] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [stageTransform, setStageTransform] = useState(getStageTransform);
+
+  useEffect(() => {
+    const onResize = () => setStageTransform(getStageTransform());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // Estados para gatilhos de atualização independentes
   const [refreshVerticalKey, setRefreshVerticalKey] = useState(0);
@@ -102,40 +120,42 @@ export default function Player() {
   }, []);
 
   return (
-    <div className="player-container">
-      <div className="player-grid">
-        {/* REGIÃO 1: Formato Vertical */}
-        <div className="region region-vertical">
-          <UniversalRegion
-            key={`vertical-${refreshVerticalKey}-${verticalContent?.id || 'none'}`}
-            content={verticalContent}
-            onComplete={refreshVertical}
-            regionName="Vertical"
-          />
-        </div>
+    <div className="player-stage">
+      <div className="player-container" style={{ transform: stageTransform }}>
+        <div className="player-grid">
+          {/* REGIÃO 1: Formato Vertical */}
+          <div className="region region-vertical">
+            <UniversalRegion
+              key={`vertical-${refreshVerticalKey}-${verticalContent?.id || 'none'}`}
+              content={verticalContent}
+              onComplete={refreshVertical}
+              regionName="Vertical"
+            />
+          </div>
 
-        {/* REGIÃO 2: Formato Horizontal */}
-        <div className="region region-horizontal">
-          <UniversalRegion
-            key={`horizontal-${refreshHorizontalKey}-${horizontalContent?.id || 'none'}`}
-            content={horizontalContent}
-            onComplete={refreshHorizontal}
-            regionName="Horizontal"
-          />
-        </div>
+          {/* REGIÃO 2: Formato Horizontal */}
+          <div className="region region-horizontal">
+            <UniversalRegion
+              key={`horizontal-${refreshHorizontalKey}-${horizontalContent?.id || 'none'}`}
+              content={horizontalContent}
+              onComplete={refreshHorizontal}
+              regionName="Horizontal"
+            />
+          </div>
 
-        {/* REGIÃO 3: Clima */}
-        <div className="region region-weather">
-          <WeatherRegion weather={weather} />
-        </div>
+          {/* REGIÃO 3: Clima */}
+          <div className="region region-weather">
+            <WeatherRegion weather={weather} />
+          </div>
 
-        {/* REGIÃO 4: Avisos em Texto */}
-        <div className="region region-text">
-          <TextRegion
-            key={`text-${refreshTextKey}-${textContent?.id || 'none'}`}
-            content={textContent}
-            onTextComplete={refreshText}
-          />
+          {/* REGIÃO 4: Avisos em Texto */}
+          <div className="region region-text">
+            <TextRegion
+              key={`text-${refreshTextKey}-${textContent?.id || 'none'}`}
+              content={textContent}
+              onTextComplete={refreshText}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -1,32 +1,21 @@
 #!/bin/bash
 
-# Script para atualizar o sistema após mudanças no código
+# Atualiza o Raspberry Pi (kiosk) com a versão mais recente do repositório.
+# O conteúdo do player vem do Railway; publicar lá é com `railway up`.
+#
+# Uso: ./scripts/update.sh [URL_DO_PLAYER]
 
 echo "🔄 Atualizando Media Player..."
 echo ""
 
 cd "$(dirname "$0")/.."
 
-echo "[1/4] Atualizando backend..."
-cd backend
-source venv/bin/activate
-pip install -r requirements.txt
-deactivate
+echo "[1/2] Baixando atualizações..."
+git pull
 
 echo ""
-echo "[2/4] Atualizando frontend..."
-cd ../frontend
-npm install
-npm run build
+echo "[2/2] Reaplicando configuração do kiosk..."
+sudo ./scripts/install.sh "$@"
 
 echo ""
-echo "[3/4] Reiniciando serviço..."
-sudo systemctl restart mediaplayer
-
-echo ""
-echo "[4/4] Verificando status..."
-sleep 2
-sudo systemctl status mediaplayer --no-pager
-
-echo ""
-echo "✓ Atualização concluída!"
+echo "✓ Atualização concluída! Reinicie o Pi (sudo reboot) para aplicar."

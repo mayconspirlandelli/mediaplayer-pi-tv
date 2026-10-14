@@ -1,3 +1,10 @@
+.player-stage {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  overflow: hidden;
+}
+
 .player-container {
   width: 2048px;
   height: 1080px;
@@ -12,18 +19,7 @@
   box-sizing: border-box;
 }
 
-/* Responsividade para telas menores (escala proporcional) */
-@media (max-width: 2048px) or (max-height: 1080px) {
-  .player-container {
-    transform: scale(calc(100vw / 2048));
-  }
-}
-
-@media (max-height: 1080px) and (min-width: 2048px) {
-  .player-container {
-    transform: scale(calc(100vh / 1080));
-  }
-}
+/* Escala/centralização calculadas em Player.jsx (getStageTransform) */
 
 .player-grid {
   width: 100%;

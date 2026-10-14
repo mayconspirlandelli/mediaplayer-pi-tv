@@ -8,7 +8,7 @@ Sistema de **digital signage** para exibir vídeos, imagens, textos e conteúdos
 
 | Modo | Como funciona |
 |---|---|
-| **Raspberry Pi (local)** | Backend + frontend rodam no Pi; o Chromium abre `http://localhost:8000` em modo kiosk, ligado à TV por HDMI. Instalação via `scripts/install.sh`. |
+| **Raspberry Pi (tela)** | Backend + frontend rodam no Railway; o Pi, ligado à TV por HDMI, só abre `https://mediaplayer.up.railway.app/` no Chromium em modo kiosk. Instalação via `sudo ./scripts/install.sh [URL]`. |
 | **Nuvem** | Backend hospedado em um servidor; a TV (ou um Pi/Smart TV/stick) só abre a URL pública do player. O admin é acessado de qualquer navegador em `/admin`. |
 
 ## 2. Funcionalidades
@@ -151,7 +151,9 @@ Mais detalhes em `API.md` na raiz.
 
 **Desenvolvimento**: backend `./run.sh` (8000) + frontend `npm run dev` (3000). Player em `http://localhost:3000/`, admin em `/admin`.
 
-**Raspberry Pi**: `scripts/install.sh` instala dependências, cria o serviço systemd `mediaplayer`, configura autostart do Chromium em kiosk (`--autoplay-policy=no-user-gesture-required`). Atualização com `scripts/update.sh`.
+**Raspberry Pi**: `scripts/install.sh` instala o Chromium, cria `/usr/local/bin/mediaplayer-kiosk` (espera a rede/servidor, abre o player em kiosk com `--autoplay-policy=no-user-gesture-required` e reabre se fechar) e o registra no autostart (LXDE, Wayfire e labwc). Remove o serviço local `mediaplayer` de instalações antigas. Atualização com `scripts/update.sh` (git pull + reinstala).
+
+**Railway**: `Dockerfile` (build do frontend + FastAPI), volume em `/data` para banco e uploads, fuso `America/Sao_Paulo`. Publicar com `railway up`.
 
 **Nuvem**: rodar o backend (uvicorn) atrás de HTTPS, com `frontend/dist` construído e um volume persistente para `uploads/` e o banco. A TV abre `https://seu-dominio/`. Vídeos grandes consomem banda da TV: considerar CDN/armazenamento externo.
 
