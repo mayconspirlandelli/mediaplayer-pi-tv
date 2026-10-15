@@ -15,7 +15,7 @@ Sistema de **digital signage** para exibir vídeos, imagens, textos e conteúdos
 
 - Cadastro de mídias: **vídeo** (upload), **imagem** (upload), **texto** (avisos), **YouTube** (link), **link externo** (Instagram, TikTok etc.).
 - Player exibe vídeos diretos do YouTube (incluindo Shorts e transmissões ao vivo), Instagram (posts/reels/stories) e TikTok apenas com a URL.
-- **Agendamento** por mídia: período (data início/fim), faixa de horário, dias da semana, duração, ordem e status ativo/inativo.
+- **Agendamento** por mídia: por padrão **tempo indeterminado** (todos os dias, o dia todo, até ser desativado ou excluído); opcionalmente um **período específico** (data início/fim, faixa de horário, dias da semana). Também duração, ordem e status ativo/inativo.
 - **Regiões independentes**: cada região da tela troca de conteúdo no seu próprio tempo.
   - Vídeo local: dura o tamanho do vídeo.
   - Imagem, texto, YouTube e links: duram o tempo configurado (`duracao`, em segundos).

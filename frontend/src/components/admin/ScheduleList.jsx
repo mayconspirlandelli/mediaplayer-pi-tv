@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../../services/api';
+import { isIndeterminado } from './periodo';
 
 export default function ScheduleList({ schedules, onDelete, onEdit }) {
   const [sortColumn, setSortColumn] = useState('prioridade');
@@ -260,8 +261,17 @@ export default function ScheduleList({ schedules, onDelete, onEdit }) {
               <td>
                 <span className={`type-badge regiao-${s.regiao}`}>{getRegiaoNome(s.regiao)}</span>
               </td>
-              <td>{s.data_inicio} a {s.data_fim}</td>
-              <td>{s.hora_inicio} - {s.hora_fim}</td>
+              {isIndeterminado(s) ? (
+                <>
+                  <td>Tempo indeterminado</td>
+                  <td>Dia todo</td>
+                </>
+              ) : (
+                <>
+                  <td>{s.data_inicio} a {s.data_fim}</td>
+                  <td>{s.hora_inicio} - {s.hora_fim}</td>
+                </>
+              )}
               <td>{s.prioridade}</td>
               <td>
                 <span className={`status ${s.ativo ? 'active' : 'inactive'}`}>

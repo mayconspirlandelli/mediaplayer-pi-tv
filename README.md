@@ -168,9 +168,10 @@ Acesse `/admin` e entre com usuário e senha. Abas disponíveis:
 
 Campos disponíveis:
 - **Região**: 1 (vertical), 2 (horizontal) ou 4 (avisos)
-- **Data Início/Fim**: período de exibição
-- **Hora Início/Fim**: horário de exibição
-- **Dias da Semana**: dias em que aparece
+- **Período**: *Tempo indeterminado* (padrão — exibe todos os dias, o dia todo, até ser desativado ou excluído) ou *Período específico*, que libera:
+  - **Data Início/Fim**: período de exibição
+  - **Hora Início/Fim**: horário de exibição
+  - **Dias da Semana**: dias em que aparece
 - **Duração**: tempo em segundos (imagens, textos e links)
 - **Ordem**: sequência na rotação (1 aparece primeiro)
 - **Ativo**: liga/desliga o agendamento

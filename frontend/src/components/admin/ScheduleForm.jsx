@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
+import { DATA_FIM_INDETERMINADA, TODOS_OS_DIAS, hojeLocal, isIndeterminado, periodoIndeterminado } from './periodo';
 
 export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
   const [formData, setFormData] = useState({
@@ -15,6 +16,8 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
     ativo: true
   });
   const [saving, setSaving] = useState(false);
+  // Padrão: mídia fica agendada por tempo indeterminado (sem data/horário/dias específicos)
+  const [indeterminado, setIndeterminado] = useState(true);
   const [filteredMedia, setFilteredMedia] = useState([]);
   const [textoAviso, setTextoAviso] = useState('');
   const MAX_CARACTERES = 200;
@@ -62,6 +65,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
         prioridade: schedule.prioridade,
         ativo: schedule.ativo
       });
+      setIndeterminado(isIndeterminado(schedule));
 
       // Carregar texto se for região 4
       if (currentRegiao === 4) {
@@ -82,8 +86,8 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
       if (!formData.data_inicio) {
         setFormData(prev => ({
           ...prev,
-          data_inicio: new Date().toISOString().split('T')[0],
-          data_fim: new Date().toISOString().split('T')[0],
+          data_inicio: hojeLocal(),
+          data_fim: hojeLocal(),
           media_id: filtered.length > 0 ? filtered[0].id : ''
         }));
       } else if (formData.regiao !== 4 && filtered.length > 0 && !filtered.some(m => m.id === formData.media_id)) {
@@ -108,6 +112,21 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
       ...prev,
       [name]: newValue
     }));
+  };
+
+  const escolherPeriodoEspecifico = () => {
+    setIndeterminado(false);
+    // Ao sair de um agendamento indeterminado, começa com um período editável
+    if (formData.data_fim === DATA_FIM_INDETERMINADA) {
+      setFormData(prev => ({
+        ...prev,
+        data_inicio: hojeLocal(),
+        data_fim: hojeLocal(),
+        hora_inicio: '08:00',
+        hora_fim: '18:00',
+        dias_semana: TODOS_OS_DIAS
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -167,7 +186,10 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
         }
       }
 
-      const dadosAgendamento = { ...formData, media_id: mediaId };
+      const periodo = indeterminado
+        ? periodoIndeterminado(isIndeterminado(schedule) ? schedule.data_inicio : undefined)
+        : {};
+      const dadosAgendamento = { ...formData, ...periodo, media_id: mediaId };
 
       if (schedule) {
         console.log('✏️ Atualizando agendamento ID:', schedule.id);
@@ -310,6 +332,27 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           </div>
 
           <div className="form-group">
+            <label>Período</label>
+            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <input type="radio" name="periodo" checked={indeterminado} onChange={() => setIndeterminado(true)} />
+                Tempo indeterminado
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <input type="radio" name="periodo" checked={!indeterminado} onChange={escolherPeriodoEspecifico} />
+                Período específico
+              </label>
+            </div>
+            <small style={{ color: '#6b7280' }}>
+              {indeterminado
+                ? 'Exibe todos os dias, o dia todo, até ser desativado ou excluído.'
+                : 'Defina datas, horário e dias da semana abaixo.'}
+            </small>
+          </div>
+
+          {!indeterminado && (
+          <>
+          <div className="form-group">
             <label>Data Início</label>
             <input type="date" name="data_inicio" className="form-control" value={formData.data_inicio} onChange={handleChange} required />
           </div>
@@ -328,6 +371,8 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
             <label>Hora Fim</label>
             <input type="time" name="hora_fim" className="form-control" value={formData.hora_fim} onChange={handleChange} required />
           </div>
+          </>
+          )}
 
           <div className="form-group">
             <label>
@@ -346,6 +391,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
           </div>
         </div>
 
+        {!indeterminado && (
         <div className="form-group">
           <label>Dias da Semana</label>
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
@@ -374,6 +420,7 @@ export default function ScheduleForm({ media, schedule, onSaved, onCancel }) {
             })}
           </div>
         </div>
+        )}
 
         <div className="form-group">
           <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -80,6 +80,10 @@ frontend/src/
 - No Pi, mídias/agendamentos locais são **substituídos** a cada sincronização: o cadastro é sempre no Railway.
 - Testes que usam `TestClient` com `SYNC_URL` definido não podem entrar no contexto do cliente (`with`): o lifespan iniciaria o sync de fundo contra o banco real (ver `tests/test_sync.py`).
 
+## Tempo indeterminado
+
+Padrão no formulário de agendamento. Não há coluna própria: é gravado como `data_fim = 2099-12-31`, `00:00:00`–`23:59:59`, todos os dias (`frontend/src/components/admin/periodo.js`). O formulário e a `ScheduleList` reconhecem a data sentinela e mostram "Tempo indeterminado".
+
 ## Agendamentos vencidos
 
 `SchedulerService.deactivate_expired` põe `ativo=False` quando `data_fim < hoje` ou (`data_fim == hoje` e `hora_fim < agora`). Roda **apenas ao listar** (`GET /api/schedule/`), por decisão do dono do projeto. Para reativar, edite o agendamento com nova data e marque ativo (se a data continuar no passado, volta a ser inativado na próxima listagem).
