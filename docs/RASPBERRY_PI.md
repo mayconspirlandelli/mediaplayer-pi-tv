@@ -94,6 +94,16 @@ Ao ligar, o backend local sobe, o Chromium abre o player em tela cheia e a sincr
 - O clima vem do servidor; sem internet, aparece "Clima indisponível".
 - Sem internet, nada é apagado: o player segue com o último conteúdo baixado.
 
+## Agendar conteúdo para a TV
+
+No admin do Railway, aba **Novo Agendamento**:
+
+1. Escolha a **região** e a **mídia** (ou envie uma nova).
+2. Em **Período**, deixe **Tempo indeterminado** (padrão) para a mídia aparecer todos os dias, o dia todo, até você desativar ou excluir o agendamento. Use **Período específico** para definir datas, horário e dias da semana.
+3. Ajuste **Duração** e **Ordem** se houver mais de uma mídia na mesma região, e clique em **Salvar**.
+
+O Pi recebe o agendamento em até 1 minuto. Agendamentos por tempo indeterminado nunca vencem; os de período específico são desativados automaticamente quando a data final passa.
+
 ## Uso no dia a dia
 
 | Ação | Como fazer |
@@ -101,10 +111,39 @@ Ao ligar, o backend local sobe, o Chromium abre o player em tela cheia e a sincr
 | Trocar o conteúdo da TV | Admin do Railway: https://mediaplayer.up.railway.app/admin (chega ao Pi em até 1 min) |
 | Ver a sincronização | `journalctl -u mediaplayer -f` |
 | Forçar uma sincronização agora | `sudo systemctl restart mediaplayer` |
-| Atualizar o código do Pi | `./scripts/update.sh` na pasta do projeto (faz `git pull` e reinstala) |
+| Atualizar o código do Pi | `./scripts/update.sh` na pasta do projeto (veja abaixo) |
 | Sair da tela cheia | `Alt+F4` fecha o player, mas ele reabre em 5 s |
 | Parar o player de vez | Abra um terminal (`Ctrl+Alt+T`) e rode `pkill -f mediaplayer-kiosk` |
 | Abrir o player de novo | Reinicie o Pi (`sudo reboot`) |
+
+## Atualizar o projeto no Raspberry Pi
+
+**O que chega sozinho, sem fazer nada no Pi:** mídias, agendamentos e o player (frontend). Sempre que algo é publicado no Railway, o Pi baixa na próxima sincronização. Mudanças no **player** passam a valer na TV depois de reiniciar o Pi (`sudo reboot`). Mudanças no **admin** (como a opção *Tempo indeterminado*) não exigem nada no Pi, porque o admin é usado direto no Railway.
+
+**O que precisa do script de atualização:** mudanças no backend do Pi (sincronização, regras de exibição, clima) e nos scripts de instalação. Para isso existe o `scripts/update.sh`. No terminal do Pi (ou por SSH):
+
+```bash
+cd ~/mediaplayer-pi-tv
+```
+
+```bash
+./scripts/update.sh
+```
+
+```bash
+sudo reboot
+```
+
+O `update.sh`:
+
+1. Baixa a versão mais recente do GitHub (`git pull`).
+2. Roda o `install.sh` de novo: atualiza as dependências Python, o serviço e o kiosk. O **token de sincronização salvo em `backend/.env` é reaproveitado**, então nada é perguntado.
+
+O conteúdo da TV (mídias e agendamentos) não é apagado na atualização.
+
+> Para atualizar sem teclado na TV, acesse o Pi por SSH a partir de outro computador da mesma rede: `ssh usuario@IP_DO_PI` (ative o SSH em `sudo raspi-config` → *Interface Options* → *SSH*).
+
+> Se o `git pull` reclamar de alterações locais, rode `git status` para ver o que mudou no Pi. Para descartar mudanças feitas à mão nos arquivos do projeto: `git checkout -- .` (não afeta `backend/.env`, banco nem uploads, que ficam fora do Git).
 
 ## Dicas para a TV
 
