@@ -2,7 +2,7 @@
 
 Sistema completo de media player estilo painel de elevador para Raspberry Pi + Smart TV via HDMI.
 
-O backend e o painel rodam no **Railway**; o Raspberry Pi só abre o player em tela cheia na TV.
+O conteúdo é cadastrado no **Railway**; o Raspberry Pi roda uma cópia local sincronizada (a cada 60 s) e exibe o player em tela cheia na TV, funcionando mesmo sem internet.
 
 - Player: https://mediaplayer.up.railway.app/
 - Admin: https://mediaplayer.up.railway.app/admin
@@ -42,7 +42,7 @@ mediaplayer-pi/
 │   ├── package.json
 │   └── vite.config.js
 ├── scripts/              # Scripts de deploy
-│   ├── install.sh        # Pi: Chromium em kiosk apontando para o Railway
+│   ├── install.sh        # Pi: backend local sincronizado + Chromium em kiosk
 │   ├── update.sh         # Pi: git pull + reinstala
 │   └── railway-start.sh  # inicialização do container no Railway
 ├── docs/                 # SOFTWARE.md, RASPBERRY_PI.md
@@ -75,7 +75,7 @@ git clone https://github.com/mayconspirlandelli/mediaplayer-pi-tv.git
 cd mediaplayer-pi-tv && sudo ./scripts/install.sh
 ```
 
-Depois ative o login automático na área de trabalho (`sudo raspi-config`) e reinicie. O script instala o Chromium em modo kiosk apontando para o Railway, com autostart no boot.
+O script pede o token de sincronização (`SYNC_TOKEN` do Railway). Depois ative o login automático na área de trabalho (`sudo raspi-config`) e reinicie. O Pi roda o backend localmente, sincroniza com o Railway e abre o player em `http://localhost:8000` em modo kiosk, com autostart no boot.
 
 ### Servidor (Railway)
 
@@ -187,7 +187,7 @@ railway logs
 railway up
 ```
 
-### Atualizar os scripts do Raspberry Pi
+### Atualizar o código do Raspberry Pi (o conteúdo sincroniza sozinho)
 ```bash
 cd ~/mediaplayer-pi-tv
 ./scripts/update.sh
@@ -227,7 +227,7 @@ cp backend/mediaplayer.db backend/mediaplayer.db.backup
 O `scripts/install.sh` configura o Pi para:
 
 1. Abrir o player automaticamente no boot (LXDE, Wayfire e labwc)
-2. Esperar a internet e o servidor antes de abrir o navegador
+2. Rodar o backend local e sincronizar com o Railway a cada 60 s (funciona offline)
 3. Abrir em fullscreen (sem bordas) e reabrir se o navegador fechar
 4. Desabilitar o apagamento de tela e ocultar o cursor
 

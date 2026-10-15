@@ -33,7 +33,7 @@ pytest tests/            # (run_tests.bat no Windows); test_image_schedule.py ex
 ```
 
 Produção: backend+frontend no **Railway** (`Dockerfile`, `railway.json`, `scripts/railway-start.sh`; banco e uploads no volume `/data`; publicar com `railway up`). URL: https://mediaplayer.up.railway.app/.
-Raspberry Pi = só tela: `sudo ./scripts/install.sh [URL]` instala o Chromium em kiosk apontando para o Railway (autostart LXDE/Wayfire/labwc, espera a rede, reabre se fechar); `scripts/update.sh` faz `git pull` e reaplica. Guia de instalação: [docs/RASPBERRY_PI.md](docs/RASPBERRY_PI.md).
+Raspberry Pi = cópia local sincronizada: `sudo ./scripts/install.sh [URL]` instala o backend no Pi com `SYNC_URL`/`SYNC_TOKEN` (o backend baixa mídias, agendamentos e o frontend do Railway a cada 60s via `/api/sync/*` e funciona offline) e o Chromium em kiosk em `http://localhost:8000` (autostart LXDE/Wayfire/labwc); `scripts/update.sh` faz `git pull` e reaplica. Guia de instalação: [docs/RASPBERRY_PI.md](docs/RASPBERRY_PI.md).
 
 ## Estrutura
 
@@ -46,9 +46,11 @@ backend/app/
   routers/media.py   # /api/media  (upload, text, youtube, link, CRUD, stats) — exige login
   routers/schedule.py# /api/schedule (CRUD, next, conflicts, reorder) — exige login
   routers/player.py  # /api/player (active-content, weather)
+  routers/sync.py    # /api/sync (export, frontend) — exige SYNC_TOKEN
   services/auth.py       # credenciais do .env, criação/validação do token
   services/scheduler.py  # regra de "o que exibir agora" + validação + deactivate_expired
-  services/weather.py    # OpenWeather + cache em banco
+  services/weather.py    # OpenWeather + cache em banco (no Pi, busca do servidor)
+  services/sync.py       # exportação (servidor) e sincronização em segundo plano (Pi, se SYNC_URL)
 frontend/src/
   App.jsx            # rotas: "/" Player, "/admin" AdminPage
   components/Player.jsx          # grid 2048x1080 escalado p/ caber na tela (getStageTransform), busca conteúdo por região
@@ -74,6 +76,9 @@ frontend/src/
 - `ADMIN_USER` / `ADMIN_PASSWORD` no `backend/.env` (padrão `admin` / `admin123` — **trocar na nuvem**). `SECRET_KEY` e `AUTH_TOKEN_TTL` (12h) opcionais.
 - Routers `media` e `schedule` têm `dependencies=[Depends(require_auth)]`. Ficam **públicos**: `/api/player/*`, `/api/health`, `/api/auth/login`, `/uploads/*`, o frontend (`/`, `/admin`).
 - Não colocar auth em `/api/player/*`: a TV abre a URL sem login.
+- `/api/sync/*` usa um token próprio (`SYNC_TOKEN`), não o login do admin.
+- No Pi, mídias/agendamentos locais são **substituídos** a cada sincronização: o cadastro é sempre no Railway.
+- Testes que usam `TestClient` com `SYNC_URL` definido não podem entrar no contexto do cliente (`with`): o lifespan iniciaria o sync de fundo contra o banco real (ver `tests/test_sync.py`).
 
 ## Agendamentos vencidos
 

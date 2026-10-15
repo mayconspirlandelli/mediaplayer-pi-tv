@@ -61,8 +61,12 @@ class WeatherService:
     
     async def _fetch_from_api(self) -> Optional[Dict]:
         """
-        Busca dados da API OpenWeatherMap
+        Busca dados da API OpenWeatherMap (no Raspberry Pi, busca do servidor central)
         """
+        sync_url = os.getenv("SYNC_URL", "").rstrip("/")
+        if sync_url:
+            return await self._fetch_from_server(sync_url)
+
         if not self.api_key or self.api_key == "your_api_key_here":
             return None
         
@@ -89,6 +93,26 @@ class WeatherService:
         
         return None
     
+    async def _fetch_from_server(self, sync_url: str) -> Optional[Dict]:
+        """
+        Busca o clima já consultado pelo servidor central (modo Raspberry Pi)
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{sync_url}/api/player/weather", timeout=10.0)
+
+        if response.status_code == 200:
+            data = response.json()
+            if not data.get("fallback"):
+                return {
+                    "temperatura": data["temperatura"],
+                    "condicao": data["condicao"],
+                    "icone": data["icone"],
+                    "cidade": data["cidade"],
+                    "cached": False,
+                }
+
+        return None
+
     def _save_to_cache(self, db: Session, weather_data: Dict):
         """
         Salva dados no cache do banco

@@ -1,16 +1,20 @@
 #!/bin/bash
 
-# Media Player - Instalação do Raspberry Pi como tela (kiosk)
-# O backend roda no Railway; o Pi só abre o player em tela cheia na TV.
+# Media Player - Instalação no Raspberry Pi
+# O Pi roda o backend localmente e sincroniza mídias, agendamentos e o frontend
+# com o servidor central (Railway). O player abre de http://localhost:8000 e
+# continua funcionando sem internet com o último conteúdo sincronizado.
 # Compatível com Raspberry Pi OS Bullseye (LXDE/X11) e Bookworm/Trixie (Wayfire/labwc).
 #
-# Uso: sudo ./scripts/install.sh [URL_DO_PLAYER]
+# Uso: sudo ./scripts/install.sh [URL_DO_SERVIDOR]
+# O token de sincronização é pedido na primeira instalação (ou via SYNC_TOKEN=... no ambiente).
 
-PLAYER_URL="${1:-https://mediaplayer.up.railway.app/}"
-HEALTH_URL="${PLAYER_URL%/}/api/health"
+SERVER_URL="${1:-https://mediaplayer.up.railway.app}"
+SERVER_URL="${SERVER_URL%/}"
+LOCAL_URL="http://localhost:8000/"
 
 echo "=================================="
-echo "Media Player - Instalação (kiosk)"
+echo "Media Player - Instalação"
 echo "=================================="
 echo ""
 
@@ -34,9 +38,32 @@ if [ -z "$HOME_DIR" ]; then
   exit 1
 fi
 
-echo -e "${GREEN}[1/5] Instalando dependências do sistema...${NC}"
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BACKEND_DIR="$PROJECT_DIR/backend"
+ENV_FILE="$BACKEND_DIR/.env"
+
+# Token de sincronização: ambiente > .env existente > pergunta
+env_value() {
+  grep -s "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2-
+}
+SYNC_TOKEN="${SYNC_TOKEN:-$(env_value SYNC_TOKEN)}"
+if [ -z "$SYNC_TOKEN" ]; then
+  read -rsp "Token de sincronização (SYNC_TOKEN do Railway): " SYNC_TOKEN
+  echo ""
+fi
+if [ -z "$SYNC_TOKEN" ]; then
+  echo -e "${RED}Token de sincronização obrigatório${NC}"
+  exit 1
+fi
+# O admin local não é usado (o conteúdo vem do servidor); senha aleatória
+ADMIN_PASSWORD="$(env_value ADMIN_PASSWORD)"
+if [ -z "$ADMIN_PASSWORD" ] || [ "$ADMIN_PASSWORD" = "admin123" ]; then
+  ADMIN_PASSWORD="$(head -c 18 /dev/urandom | base64 | tr -d '/+=')"
+fi
+
+echo -e "${GREEN}[1/7] Instalando dependências do sistema...${NC}"
 apt-get update
-apt-get install -y curl unclutter
+apt-get install -y python3 python3-venv python3-pip curl unclutter
 # O pacote do Chromium mudou de nome nas versões novas do Raspberry Pi OS
 if apt-cache show chromium >/dev/null 2>&1; then
   apt-get install -y chromium
@@ -44,30 +71,75 @@ else
   apt-get install -y chromium-browser
 fi
 
+# Agendamentos usam o horário local do Pi
+timedatectl set-timezone America/Sao_Paulo || true
+
 echo ""
-echo -e "${GREEN}[2/5] Removendo instalação local antiga (se houver)...${NC}"
-# Versões anteriores rodavam o backend no Pi e abriam http://localhost:8000
-if [ -f /etc/systemd/system/mediaplayer.service ]; then
-  systemctl stop mediaplayer.service
-  systemctl disable mediaplayer.service
-  rm -f /etc/systemd/system/mediaplayer.service
-  systemctl daemon-reload
-  echo "   • Serviço local mediaplayer removido"
+echo -e "${GREEN}[2/7] Configurando backend Python...${NC}"
+sudo -u "$USER" python3 -m venv "$BACKEND_DIR/.venv"
+sudo -u "$USER" "$BACKEND_DIR/.venv/bin/pip" install --upgrade pip
+sudo -u "$USER" "$BACKEND_DIR/.venv/bin/pip" install -r "$BACKEND_DIR/requirements.txt"
+
+cat > "$ENV_FILE" << EOF
+# Gerado por scripts/install.sh (Raspberry Pi sincronizado com o servidor)
+SYNC_URL=$SERVER_URL
+SYNC_TOKEN=$SYNC_TOKEN
+SYNC_INTERVAL=60
+UPLOAD_DIR=uploads
+ADMIN_USER=admin
+ADMIN_PASSWORD=$ADMIN_PASSWORD
+EOF
+chown "$USER:$USER" "$ENV_FILE"
+chmod 600 "$ENV_FILE"
+
+echo ""
+echo -e "${GREEN}[3/7] Primeira sincronização com $SERVER_URL...${NC}"
+if (cd "$BACKEND_DIR" && sudo -u "$USER" .venv/bin/python -m app.services.sync); then
+  echo "   • Conteúdo e frontend baixados"
+else
+  echo -e "${YELLOW}   • Não foi possível sincronizar agora (sem internet ou token inválido).${NC}"
+  echo -e "${YELLOW}     O serviço tenta de novo a cada 60s.${NC}"
 fi
+
+echo ""
+echo -e "${GREEN}[4/7] Criando serviço systemd...${NC}"
+
+cat > /etc/systemd/system/mediaplayer.service << EOF
+[Unit]
+Description=Media Player Backend (sincronizado com $SERVER_URL)
+After=network.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=$BACKEND_DIR
+EnvironmentFile=$ENV_FILE
+ExecStart=$BACKEND_DIR/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable mediaplayer.service
+systemctl restart mediaplayer.service
+
+echo ""
+echo -e "${GREEN}[5/7] Criando script do kiosk...${NC}"
+
+# Remove linhas de instalações antigas no autostart do LXDE
 LXDE_AUTOSTART="$HOME_DIR/.config/lxsession/LXDE-pi/autostart"
 if [ -f "$LXDE_AUTOSTART" ]; then
   sed -i '/chromium-browser --kiosk/d; /bash -c "sleep 10"/d' "$LXDE_AUTOSTART"
 fi
 
-echo ""
-echo -e "${GREEN}[3/5] Criando script do kiosk...${NC}"
-
 cat > /usr/local/bin/mediaplayer-kiosk << EOF
 #!/bin/bash
-# Abre o player em tela cheia. Gerado por scripts/install.sh
+# Abre o player local em tela cheia. Gerado por scripts/install.sh
 
-PLAYER_URL="$PLAYER_URL"
-HEALTH_URL="$HEALTH_URL"
+PLAYER_URL="$LOCAL_URL"
 
 # Evita duas instâncias (alguns desktops leem mais de um autostart)
 exec 9>/tmp/mediaplayer-kiosk.lock
@@ -81,9 +153,9 @@ if [ -n "\$DISPLAY" ] && [ -z "\$WAYLAND_DISPLAY" ] && command -v xset >/dev/nul
   unclutter -idle 0.5 -root &
 fi
 
-# Aguardar internet e o servidor responderem (Wi-Fi pode demorar no boot)
-until curl -fsS -m 5 "\$HEALTH_URL" >/dev/null 2>&1; do
-  sleep 5
+# Aguardar o backend local subir com o frontend (não depende de internet)
+until curl -fsS -m 5 "\$PLAYER_URL" >/dev/null 2>&1; do
+  sleep 3
 done
 
 BROWSER=\$(command -v chromium || command -v chromium-browser)
@@ -106,7 +178,7 @@ EOF
 chmod +x /usr/local/bin/mediaplayer-kiosk
 
 echo ""
-echo -e "${GREEN}[4/5] Configurando autostart (kiosk mode)...${NC}"
+echo -e "${GREEN}[6/7] Configurando autostart (kiosk mode)...${NC}"
 
 # XDG autostart: lido pelo LXDE (Bullseye) e pelo labwc (Bookworm/Trixie)
 mkdir -p "$HOME_DIR/.config/autostart"
@@ -139,7 +211,7 @@ fi
 chown -R "$USER:$USER" "$HOME_DIR/.config"
 
 echo ""
-echo -e "${GREEN}[5/5] Desligando o apagamento de tela...${NC}"
+echo -e "${GREEN}[7/7] Desligando o apagamento de tela...${NC}"
 if command -v raspi-config >/dev/null; then
   raspi-config nonint do_blanking 1 || true
 fi
@@ -150,8 +222,9 @@ echo -e "${GREEN}Instalação Concluída!${NC}"
 echo "=================================="
 echo ""
 echo "📋 Informações:"
-echo "   • Player (fullscreen): $PLAYER_URL"
-echo "   • Admin Panel: ${PLAYER_URL%/}/admin"
+echo "   • Player local (tela cheia): $LOCAL_URL"
+echo "   • Conteúdo cadastrado em: $SERVER_URL/admin"
+echo "   • Sincroniza a cada 60s; sem internet, exibe o último conteúdo baixado"
 echo ""
 echo -e "${YELLOW}⚠️  IMPORTANTE:${NC}"
 echo "   1. O Pi precisa iniciar na área de trabalho com login automático:"
@@ -161,7 +234,8 @@ echo "   2. Reinicie o Raspberry Pi para abrir o player:"
 echo "      sudo reboot"
 echo ""
 echo "📚 Comandos úteis:"
+echo "   • Status: sudo systemctl status mediaplayer"
+echo "   • Logs da sincronização: journalctl -u mediaplayer -f"
 echo "   • Sair do player: Alt+F4 (ele reabre em 5s; para parar: pkill -f mediaplayer-kiosk)"
-echo "   • Trocar a URL: sudo ./scripts/install.sh https://outra-url/"
 echo ""
 echo "=================================="

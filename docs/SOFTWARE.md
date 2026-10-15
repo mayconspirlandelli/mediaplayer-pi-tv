@@ -8,7 +8,7 @@ Sistema de **digital signage** para exibir vídeos, imagens, textos e conteúdos
 
 | Modo | Como funciona |
 |---|---|
-| **Raspberry Pi (tela)** | Backend + frontend rodam no Railway; o Pi, ligado à TV por HDMI, só abre `https://mediaplayer.up.railway.app/` no Chromium em modo kiosk. Instalação via `sudo ./scripts/install.sh [URL]`. |
+| **Raspberry Pi (sincronizado)** | O conteúdo é cadastrado no Railway; o Pi, ligado à TV por HDMI, roda o backend localmente, sincroniza mídias/agendamentos/frontend a cada 60 s e abre `http://localhost:8000` no Chromium em modo kiosk. Funciona offline com o último conteúdo. Instalação via `sudo ./scripts/install.sh [URL]`. |
 | **Nuvem** | Backend hospedado em um servidor; a TV (ou um Pi/Smart TV/stick) só abre a URL pública do player. O admin é acessado de qualquer navegador em `/admin`. |
 
 ## 2. Funcionalidades
@@ -126,10 +126,12 @@ Documentação interativa em `/docs`.
 | GET | `/api/player/active-content/region/{n}` | conteúdo atual de uma região |
 | GET | `/api/player/weather` | clima (com emoji) |
 | GET | `/api/health` | health check |
+| GET | `/api/sync/export` | mídias + agendamentos + versão do frontend (para o Pi) |
+| GET | `/api/sync/frontend` | build do frontend em `.tar.gz` (para o Pi) |
 | POST | `/api/auth/login` | login (`username`, `password`) → `token` |
 | GET | `/api/auth/me` | valida o token |
 
-As rotas `/api/media/*` e `/api/schedule/*` exigem o cabeçalho `Authorization: Bearer <token>`.
+As rotas `/api/media/*` e `/api/schedule/*` exigem o cabeçalho `Authorization: Bearer <token>`. As rotas `/api/sync/*` exigem `Authorization: Bearer <SYNC_TOKEN>` (503 se `SYNC_TOKEN` não estiver configurado).
 
 Mais detalhes em `API.md` na raiz.
 
@@ -146,12 +148,16 @@ Mais detalhes em `API.md` na raiz.
 | `ADMIN_USER` / `ADMIN_PASSWORD` | admin / admin123 | login do admin (**trocar**) |
 | `SECRET_KEY` | derivada da senha | assinatura dos tokens |
 | `AUTH_TOKEN_TTL` | 43200 | validade do login (s) |
+| `SYNC_TOKEN` | — | servidor: habilita `/api/sync/*`; Pi: token usado para sincronizar |
+| `SYNC_URL` | — | só no Pi: URL do servidor central; liga a sincronização em segundo plano |
+| `SYNC_INTERVAL` | 60 | só no Pi: intervalo da sincronização (s) |
+| `FRONTEND_DIST` | ../frontend/dist | pasta do build do frontend |
 
 ## 9. Operação
 
 **Desenvolvimento**: backend `./run.sh` (8000) + frontend `npm run dev` (3000). Player em `http://localhost:3000/`, admin em `/admin`.
 
-**Raspberry Pi**: `scripts/install.sh` instala o Chromium, cria `/usr/local/bin/mediaplayer-kiosk` (espera a rede/servidor, abre o player em kiosk com `--autoplay-policy=no-user-gesture-required` e reabre se fechar) e o registra no autostart (LXDE, Wayfire e labwc). Remove o serviço local `mediaplayer` de instalações antigas. Atualização com `scripts/update.sh` (git pull + reinstala). Passo a passo completo em [RASPBERRY_PI.md](RASPBERRY_PI.md).
+**Raspberry Pi**: `scripts/install.sh` instala Python e Chromium, cria `backend/.venv` e `backend/.env` (`SYNC_URL`, `SYNC_TOKEN`), faz a primeira sincronização, cria o serviço systemd `mediaplayer` (backend em `127.0.0.1:8000` com a sincronização em segundo plano — `app/services/sync.py`) e `/usr/local/bin/mediaplayer-kiosk` (espera o player local, abre em kiosk com `--autoplay-policy=no-user-gesture-required` e reabre se fechar), registrado no autostart (LXDE, Wayfire e labwc). A cada ciclo o Pi substitui mídias/agendamentos locais pelos do servidor, baixa arquivos novos, apaga os removidos e atualiza o frontend; sem internet mantém o último conteúdo. O clima também vem do servidor. Atualização do código com `scripts/update.sh` (git pull + reinstala). Passo a passo completo em [RASPBERRY_PI.md](RASPBERRY_PI.md).
 
 **Railway**: `Dockerfile` (build do frontend + FastAPI), volume em `/data` para banco e uploads, fuso `America/Sao_Paulo`. Publicar com `railway up`.
 
