@@ -10,27 +10,30 @@ O conteúdo é cadastrado no **Railway**; o Raspberry Pi roda uma cópia local s
 
 ## 📋 Características
 
-- ✅ Fullscreen/Kiosk mode automático
-- ✅ Resolução fixa 1920x1080 (Full HD)
-- ✅ 4 regiões de conteúdo independentes
-- ✅ Sistema de agendamento completo
-- ✅ Painel administrativo web
-- ✅ Previsão do tempo integrada
-- ✅ Funcionamento offline (exceto clima)
-- ✅ Autostart no boot do Raspberry Pi
+- ✅ Layout de 2048x1080 que se ajusta a qualquer TV (com faixas pretas quando a proporção difere)
+- ✅ 4 regiões independentes: vertical, horizontal, clima e avisos em texto
+- ✅ Mídias: vídeo e imagem (upload), avisos em texto, YouTube (inclusive Shorts e ao vivo), Instagram e TikTok
+- ✅ Agendamento por período, horário, dias da semana, duração e ordem de exibição
+- ✅ Rotação automática quando há mais de um conteúdo na mesma região
+- ✅ Painel administrativo web com login (dashboard, mídias, upload, agendamentos com reordenação por arrastar)
+- ✅ Inativação automática de agendamentos vencidos
+- ✅ Previsão do tempo integrada (OpenWeatherMap)
+- ✅ Servidor central no Railway + Raspberry Pi sincronizado que funciona offline
+- ✅ Kiosk em tela cheia com autostart no boot do Raspberry Pi
 
 ## 🏗️ Arquitetura
 
 ```
-mediaplayer-pi/
+mediaplayer-pi-tv/
 ├── backend/              # API Python (FastAPI)
 │   ├── app/
 │   │   ├── main.py
 │   │   ├── database.py
 │   │   ├── models.py
-│   │   ├── routers/
-│   │   └── services/
+│   │   ├── routers/      # auth, media, schedule, player, sync
+│   │   └── services/     # auth, scheduler, weather, sync
 │   ├── uploads/          # Arquivos de mídia
+│   ├── tests/
 │   ├── requirements.txt
 │   └── run.sh
 ├── frontend/             # React + Vite
@@ -50,19 +53,29 @@ mediaplayer-pi/
 └── README.md
 ```
 
-## 🖥️ Layout (1920x1080)
+## 🖥️ Layout (2048x1080)
+
+O player é desenhado em 2048x1080 (margem de 40 px, espaço de 20 px entre regiões) e escalado para caber na tela da TV.
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  REGIÃO 1: Vídeos Verticais  │  REGIÃO 2: Imagens         │
-│  (1080x1080)                  │  (840x980)               │
-│                               │                           │
-│                               │  REGIÃO 3: Clima          │
-│                               │  (840x100)                │
-├───────────────────────────────┴───────────────────────────┤
-│  REGIÃO 4: Avisos em Texto (1920x100)                     │
-└─────────────────────────────────────────────────────────┘
+┌──────────────┬────────────────────────────┬─────────────┐
+│  REGIÃO 1    │        REGIÃO 2            │  REGIÃO 3   │
+│  Vertical    │        Horizontal          │  Clima      │
+│  440 x 840   │        1040 x 840          │  400 x 840  │
+│              │                            │  data/hora  │
+├──────────────┴────────────────────────────┼─────────────┤
+│  REGIÃO 4 — Avisos em texto (160 px)      │   logo      │
+└───────────────────────────────────────────┴─────────────┘
 ```
+
+| Região | Conteúdo | Tipos aceitos | Agendável |
+|---|---|---|---|
+| 1 | Vertical | vídeo, imagem, YouTube, link | Sim |
+| 2 | Horizontal | vídeo, imagem, YouTube, link | Sim |
+| 3 | Clima, data e hora | automático | Não |
+| 4 | Avisos (rolam se o texto for longo) | texto | Sim |
+
+Cada região troca de conteúdo no seu próprio tempo: vídeo enviado dura o tamanho do vídeo; imagem, texto, YouTube e links duram a `duracao` configurada. Vídeos tocam sem som (exigência do autoplay do navegador).
 
 ## 🚀 Instalação Rápida
 
@@ -123,56 +136,55 @@ http://localhost:8000        (backend servindo o build)
 
 ## 🔧 Configuração
 
-### API de Clima (OpenWeatherMap)
+As variáveis ficam no Railway (`railway variables`) e, no desenvolvimento, em `backend/.env` (veja `backend/.env.example`):
 
-1. Crie conta gratuita: https://openweathermap.org/api
-2. Obtenha sua API Key
-3. Edite o arquivo `.env`:
+| Variável | Uso |
+|---|---|
+| `ADMIN_USER` / `ADMIN_PASSWORD` | login do admin (padrão `admin` / `admin123` — **troque**) |
+| `SECRET_KEY` | assinatura dos tokens de login |
+| `OPENWEATHER_API_KEY` | chave gratuita em https://openweathermap.org/api |
+| `WEATHER_CITY` / `WEATHER_COUNTRY` | cidade do clima (padrão Aparecida de Goiania / BR) |
+| `SYNC_TOKEN` | habilita a sincronização com o Raspberry Pi |
+
+Para configurar o clima no Railway:
 
 ```bash
-OPENWEATHER_API_KEY=sua_chave_aqui
-WEATHER_CITY=Aparecida de Goiania
-WEATHER_COUNTRY=BR
+railway variable set OPENWEATHER_API_KEY=sua_chave_aqui
 ```
 
-### Configuração de Cidade
-
-Edite `backend/.env`:
-```
-WEATHER_CITY=SuaCidade
-WEATHER_COUNTRY=BR
-WEATHER_UPDATE_INTERVAL=600  # 10 minutos
-```
+Lista completa em [docs/SOFTWARE.md](docs/SOFTWARE.md#8-configuração-backendenv).
 
 ## 📱 Uso do Painel Admin
 
-### Upload de Mídia
+Acesse `/admin` e entre com usuário e senha. Abas disponíveis:
 
-1. Acesse `/admin`
-2. Clique em "Nova Mídia"
-3. Selecione o tipo (Vídeo/Imagem/Texto)
-4. Faça upload do arquivo
-5. Configure agendamento
-6. Salve
+- **Dashboard**: estatísticas de mídias e agendamentos
+- **Mídias**: lista e exclusão
+- **Upload**: vídeo, imagem, texto, YouTube ou link (Instagram/TikTok)
+- **Agendamentos**: lista com ordenação por coluna, reordenação por arrastar e edição
+- **Novo Agendamento**: escolhe uma mídia existente ou envia uma nova (vídeo, imagem ou link nas regiões 1 e 2; texto na região 4)
 
 ### Agendamento
 
 Campos disponíveis:
-- **Data Início/Fim**: Período de exibição
-- **Hora Início/Fim**: Horário de exibição
-- **Duração**: Tempo em segundos (para imagens/textos)
-- **Dias da Semana**: Selecione os dias
-- **Prioridade**: Resolução de conflitos
+- **Região**: 1 (vertical), 2 (horizontal) ou 4 (avisos)
+- **Data Início/Fim**: período de exibição
+- **Hora Início/Fim**: horário de exibição
+- **Dias da Semana**: dias em que aparece
+- **Duração**: tempo em segundos (imagens, textos e links)
+- **Ordem**: sequência na rotação (1 aparece primeiro)
+- **Ativo**: liga/desliga o agendamento
+
+Agendamentos cujo período terminou são inativados automaticamente; para reativar, edite com novas datas.
 
 ### Exemplo de Agendamento
 
 ```
-Vídeo Promocional:
+Vídeo Promocional (região 2):
 - Data: 01/03/2026 a 15/03/2026
 - Horário: 08:00 às 18:00
 - Dias: Segunda a Sexta
-- Duração: 30 segundos
-- Prioridade: Alta
+- Ordem: 1
 ```
 
 ## 🛠️ Manutenção
@@ -193,34 +205,37 @@ cd ~/mediaplayer-pi-tv
 ./scripts/update.sh
 ```
 
-### Backup do banco
+### Backup do banco (Railway)
+O banco (`mediaplayer.db`) e os uploads ficam no volume `mediaplayer-volume`, montado em `/data`. Para navegar e baixar os arquivos (exige uma chave SSH cadastrada com `railway ssh keys add`):
 ```bash
-cp backend/mediaplayer.db backend/mediaplayer.db.backup
+railway volume files --volume mediaplayer-volume browse
 ```
 
 ## 📊 Banco de Dados
 
-### Estrutura
+SQLite (tabelas criadas automaticamente na inicialização).
 
 **Tabela: media**
 - id (INTEGER PRIMARY KEY)
-- tipo (TEXT: 'video', 'imagem', 'texto')
-- caminho_arquivo (TEXT)
-- texto (TEXT, nullable)
+- tipo (TEXT: 'video', 'imagem', 'texto', 'youtube', 'link')
+- nome (TEXT)
+- caminho_arquivo (TEXT — caminho em `uploads/` ou URL para youtube/link)
+- texto (TEXT, só para avisos)
 - ativo (BOOLEAN)
 - criado_em (DATETIME)
 
 **Tabela: schedule**
 - id (INTEGER PRIMARY KEY)
 - media_id (INTEGER FK)
-- data_inicio (DATE)
-- data_fim (DATE)
-- hora_inicio (TIME)
-- hora_fim (TIME)
+- regiao (INTEGER: 1, 2 ou 4)
+- data_inicio / data_fim (DATE)
+- hora_inicio / hora_fim (TIME)
 - duracao (INTEGER, segundos)
-- dias_semana (TEXT, JSON)
-- prioridade (INTEGER)
+- dias_semana (TEXT, lista separada por vírgula, 0 = domingo)
+- prioridade (INTEGER — a "Ordem" no painel)
 - ativo (BOOLEAN)
+
+**Tabela: weather_cache** — cache da previsão do tempo.
 
 ## 🔄 Autostart e Kiosk Mode
 
@@ -235,21 +250,16 @@ Detalhes e solução de problemas no **[guia do Raspberry Pi](docs/RASPBERRY_PI.
 
 ## 🌡️ Previsão do Tempo
 
-- Atualização automática a cada 10 minutos
-- Cache local para funcionamento offline
-- Fallback para última previsão salva
-- Temperatura em Celsius
-- Ícones de clima
+- Atualização automática a cada 10 minutos, com cache no banco
+- Temperatura em Celsius e ícone do clima
+- No Raspberry Pi, o clima vem do servidor central (não precisa de chave no Pi)
+- Sem chave ou sem internet, mostra "Clima indisponível"
 
 ## ⚡ Performance
 
-Otimizações para Raspberry Pi:
-
-- Build otimizado do Vite
-- Vídeos em H.264 (aceleração hardware)
-- Imagens otimizadas (max 1920x1080)
-- SQLite com índices
-- Cache de assets estáticos
+- Prefira vídeos **MP4 H.264**; no Raspberry Pi 3, use 720p
+- Links do YouTube/Instagram/TikTok são mais pesados e dependem de internet
+- No Pi, mídias ficam no cartão SD (não consomem banda a cada exibição)
 
 ## 🐛 Troubleshooting
 
@@ -273,30 +283,42 @@ Veja a seção "Problemas comuns" do [guia do Raspberry Pi](docs/RASPBERRY_PI.md
 
 ## 📝 API Endpoints
 
-### Media
-- `GET /api/media` - Lista todas as mídias
-- `POST /api/media` - Upload nova mídia
-- `PUT /api/media/{id}` - Atualiza mídia
-- `DELETE /api/media/{id}` - Remove mídia
+Documentação interativa em `/docs`. Resumo:
 
-### Schedule
-- `GET /api/schedule` - Lista agendamentos
-- `POST /api/schedule` - Cria agendamento
+### Media (exige login)
+- `GET /api/media/` - Lista mídias
+- `POST /api/media/upload` - Upload de vídeo/imagem
+- `POST /api/media/text` - Cria aviso de texto
+- `POST /api/media/youtube` - Cadastra link do YouTube
+- `POST /api/media/link` - Cadastra link (Instagram, TikTok…)
+- `PUT /api/media/{id}` - Altera nome, texto ou ativo
+- `DELETE /api/media/{id}` - Remove mídia, arquivo e agendamentos
+
+### Schedule (exige login)
+- `GET /api/schedule/` - Lista agendamentos (inativa os vencidos)
+- `POST /api/schedule/` - Cria agendamento
 - `PUT /api/schedule/{id}` - Atualiza agendamento
 - `DELETE /api/schedule/{id}` - Remove agendamento
+- `PUT /api/schedule/reorder` - Atualiza a ordem em lote
 
-### Player
-- `GET /api/active-content` - Conteúdo ativo no momento
-- `GET /api/weather` - Dados do clima
+### Player (público)
+- `GET /api/player/active-content/region/{n}` - Conteúdo atual da região
+- `GET /api/player/weather` - Dados do clima
 
-### Admin
-- `GET /admin` - Painel administrativo
+### Auth
+- `POST /api/auth/login` - Login → token
+- `GET /api/auth/me` - Valida o token
+
+### Sync (exige `SYNC_TOKEN`)
+- `GET /api/sync/export` - Mídias e agendamentos para o Raspberry Pi
+- `GET /api/sync/frontend` - Build do frontend para o Raspberry Pi
 
 ## 🔒 Segurança
 
-- Acesso restrito à rede local
-- Sem autenticação (ambiente controlado)
-- Para produção, adicione auth básica
+- Painel admin e rotas de mídia/agendamento protegidos por login (token Bearer com validade de 12h)
+- Troque `ADMIN_PASSWORD` e defina `SECRET_KEY` em produção
+- Sincronização do Pi usa um token separado (`SYNC_TOKEN`)
+- O player (`/`) e `/api/player/*` são públicos, para a TV abrir sem login
 
 ## 📄 Licença
 
@@ -311,6 +333,6 @@ Para dúvidas ou problemas:
 
 ---
 
-**Desenvolvido para Raspberry Pi 4 + Smart TV HDMI**
-**Resolução: 1920x1080 (Full HD)**
-**Sistema: Raspberry Pi OS**
+**Desenvolvido para Raspberry Pi 3/4 + Smart TV HDMI**
+**Layout: 2048x1080, ajustado à resolução da TV**
+**Servidor: Railway · Pi: Raspberry Pi OS**
