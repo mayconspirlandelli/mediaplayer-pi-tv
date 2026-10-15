@@ -267,26 +267,36 @@ class TestGetActiveContent:
         # Vídeo deve ser None porque hoje não está nos dias configurados
         assert result["video"] is None
     
-    def test_get_active_content_priority(self, test_db, sample_video_media):
+    @pytest.mark.parametrize("segundo, esperado", [(0, "ordem1"), (29, "ordem1"), (30, "ordem10"), (59, "ordem10")])
+    def test_get_active_content_priority(self, test_db, sample_video_media, monkeypatch, segundo, esperado):
         """
-        Testa se get_active_content retorna o conteúdo de maior prioridade
+        Testa a rotação por ordem: menor prioridade aparece primeiro e cada
+        conteúdo ocupa sua duração no ciclo (segundos desde a meia-noite % soma).
+        O relógio é fixado para o resultado não depender da hora em que o teste roda.
         """
-        now = datetime.now()
-        current_date = now.date()
-        
+        agora = datetime(2026, 1, 1, 12, 0, segundo)  # 12:00 = múltiplo do ciclo de 60s
+
+        class RelogioFixo(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return agora
+
+        monkeypatch.setattr("app.services.scheduler.datetime", RelogioFixo)
+        current_date = agora.date()
+
         # Criar mídia adicional
         media2 = Media(
             tipo="video",
-            nome="Video Prioridade Baixa",
+            nome="Video Ordem 1",
             caminho_arquivo="/uploads/video2.mp4",
             ativo=True
         )
         test_db.add(media2)
         test_db.commit()
         test_db.refresh(media2)
-        
-        # Criar agendamento com prioridade baixa
-        schedule_low = Schedule(
+
+        # Ordem 1: exibido primeiro (segundos 0-29 do ciclo)
+        schedule_ordem1 = Schedule(
             media_id=media2.id,
             data_inicio=current_date,
             data_fim=current_date + timedelta(days=1),
@@ -294,14 +304,14 @@ class TestGetActiveContent:
             hora_fim=time(23, 59, 59),
             duracao=30,
             dias_semana="0,1,2,3,4,5,6",
-            prioridade=1,  # Prioridade baixa
+            prioridade=1,
             regiao=1,
             ativo=True
         )
-        test_db.add(schedule_low)
-        
-        # Criar agendamento com prioridade alta
-        schedule_high = Schedule(
+        test_db.add(schedule_ordem1)
+
+        # Ordem 10: exibido depois (segundos 30-59 do ciclo)
+        schedule_ordem10 = Schedule(
             media_id=sample_video_media.id,
             data_inicio=current_date,
             data_fim=current_date + timedelta(days=1),
@@ -309,20 +319,19 @@ class TestGetActiveContent:
             hora_fim=time(23, 59, 59),
             duracao=30,
             dias_semana="0,1,2,3,4,5,6",
-            prioridade=10,  # Prioridade alta
+            prioridade=10,
             regiao=1,
             ativo=True
         )
-        test_db.add(schedule_high)
+        test_db.add(schedule_ordem10)
         test_db.commit()
-        
+
         result = SchedulerService.get_active_content(test_db)
-        
-        # Deve retornar o vídeo com maior prioridade
+
+        esperado_id = {"ordem1": media2.id, "ordem10": sample_video_media.id}[esperado]
         assert result["video"] is not None
-        assert result["video"]["id"] == sample_video_media.id
-        assert result["video"]["nome"] == "Video Teste"
-    
+        assert result["video"]["id"] == esperado_id
+
     def test_get_active_content_outside_time_range(self, test_db, sample_image_media):
         """
         Testa se get_active_content ignora agendamentos fora do horário
