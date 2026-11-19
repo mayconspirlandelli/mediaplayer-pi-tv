@@ -48,3 +48,6 @@ Thumbs.db
 *.log
 logs/
 .railway-credentials.txt
+
+# Pacote do totem Windows
+dist-totem/

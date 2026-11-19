@@ -1,0 +1,30 @@
+MEDIA PLAYER - TOTEM WINDOWS
+============================
+
+INSTALAR (uma vez)
+1. Descompacte esta pasta em um local fixo, por exemplo C:\mediaplayer-totem
+   (nao rode de dentro do ZIP e nao mova a pasta depois de instalar).
+2. De duplo clique em instalar.bat e responda as perguntas.
+   Precisa de internet: instala o Python (se faltar) e as dependencias.
+3. Anote o usuario e a senha do admin mostrados no final.
+
+USO
+- O player abre sozinho em tela cheia (Microsoft Edge) ao entrar no Windows.
+- Cadastrar midias e agendamentos, de outro computador ou celular da mesma rede:
+      http://IP_DO_TOTEM:8000/admin
+- Sair do player na hora (com teclado): Alt+F4 (ele reabre em 5 segundos).
+- Parar de vez: parar.bat      Voltar: iniciar.bat ou reiniciar o Windows.
+
+ATUALIZAR
+- Envie o novo mediaplayer-totem-AAAAMMDD-HHMM.zip para esta pasta (ou para a
+  pasta acima, por exemplo por WinSCP) e de duplo clique em atualizar.bat.
+- Banco, midias e senha (backend\.env) sao preservados; um backup do banco
+  e salvo em backups\.
+
+PASTAS
+  backend\mediaplayer.db   banco de dados (agendamentos e cadastro de midias)
+  backend\uploads\         videos e imagens enviados
+  backend\.env             senha do admin e chaves
+  logs\                    totem.log, backend.log, backend-erro.log
+
+Guia completo: docs\TOTEM_WINDOWS.md no repositorio do projeto.

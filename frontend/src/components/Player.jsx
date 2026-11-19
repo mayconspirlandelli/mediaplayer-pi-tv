@@ -120,7 +120,7 @@ export default function Player() {
   }, []);
 
   return (
-    <div className="player-stage">
+    <div className="player-stage" onContextMenu={(e) => e.preventDefault()}>
       <div className="player-container" style={{ transform: stageTransform }}>
         <div className="player-grid">
           {/* REGIÃO 1: Formato Vertical */}

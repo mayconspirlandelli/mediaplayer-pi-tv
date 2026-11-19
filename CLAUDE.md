@@ -34,6 +34,7 @@ pytest tests/            # (run_tests.bat no Windows); test_image_schedule.py ex
 
 Produção: backend+frontend no **Railway** (`Dockerfile`, `railway.json`, `scripts/railway-start.sh`; banco e uploads no volume `/data`; publicar com `railway up`). URL: https://mediaplayer.up.railway.app/.
 Raspberry Pi = cópia local sincronizada: `sudo ./scripts/install.sh [URL]` instala o backend no Pi com `SYNC_URL`/`SYNC_TOKEN` (o backend baixa mídias, agendamentos e o frontend do Railway a cada 60s via `/api/sync/*` e funciona offline) e o Chromium em kiosk em `http://localhost:8000` (autostart LXDE/Wayfire/labwc); `scripts/update.sh` faz `git pull` e reaplica. Guia de instalação: [docs/RASPBERRY_PI.md](docs/RASPBERRY_PI.md).
+Totem Windows (branch `toten`): servidor 100% local, sem Railway. `python3 scripts/empacotar_totem.py` gera `dist-totem/mediaplayer-totem-*.zip` (backend/app + frontend/dist + `totem/`); no totem, `instalar.bat` cria o venv, `backend\.env`, regra de firewall, tarefa agendada `MediaPlayerTotem` (ao entrar no Windows roda `scripts/iniciar.ps1`: sobe o uvicorn e abre o Edge `--kiosk`) e o SSH opcional; `atualizar.bat` troca só o programa e preserva `.env`, banco e uploads. Os `.bat` devem ser só ASCII; o empacotador converte para CRLF e os `.ps1`/`.txt` para UTF-8 com BOM. Guia: [docs/TOTEM_WINDOWS.md](docs/TOTEM_WINDOWS.md). Scripts ainda não executados em Windows real.
 
 ## Estrutura
 

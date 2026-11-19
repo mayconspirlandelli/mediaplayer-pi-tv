@@ -8,6 +8,7 @@ Sistema de **digital signage** para exibir vídeos, imagens, textos e conteúdos
 
 | Modo | Como funciona |
 |---|---|
+| **Totem Windows (local)** | Servidor local no Windows (banco e mídias no próprio totem), Edge em tela cheia ao entrar no Windows, cadastro pelo admin via rede local e manutenção por SSH/WinSCP. Pacote gerado por `scripts/empacotar_totem.py`; guia em [TOTEM_WINDOWS.md](TOTEM_WINDOWS.md). |
 | **Raspberry Pi (sincronizado)** | O conteúdo é cadastrado no Railway; o Pi, ligado à TV por HDMI, roda o backend localmente, sincroniza mídias/agendamentos/frontend a cada 60 s e abre `http://localhost:8000` no Chromium em modo kiosk. Funciona offline com o último conteúdo. Instalação via `sudo ./scripts/install.sh [URL]`. |
 | **Nuvem** | Backend hospedado em um servidor; a TV (ou um Pi/Smart TV/stick) só abre a URL pública do player. O admin é acessado de qualquer navegador em `/admin`. |
 

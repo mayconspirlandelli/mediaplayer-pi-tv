@@ -47,8 +47,10 @@ mediaplayer-pi-tv/
 ├── scripts/              # Scripts de deploy
 │   ├── install.sh        # Pi: backend local sincronizado + Chromium em kiosk
 │   ├── update.sh         # Pi: git pull + reinstala
-│   └── railway-start.sh  # inicialização do container no Railway
-├── docs/                 # SOFTWARE.md, RASPBERRY_PI.md
+│   ├── railway-start.sh  # inicialização do container no Railway
+│   └── empacotar_totem.py # gera o ZIP do totem Windows
+├── totem/                # arquivos do pacote Windows (instalar/iniciar/atualizar .bat/.ps1)
+├── docs/                 # SOFTWARE.md, RASPBERRY_PI.md, TOTEM_WINDOWS.md
 ├── Dockerfile            # imagem usada no Railway
 └── README.md
 ```
@@ -89,6 +91,10 @@ cd mediaplayer-pi-tv && sudo ./scripts/install.sh
 ```
 
 O script pede o token de sincronização (`SYNC_TOKEN` do Railway). Depois ative o login automático na área de trabalho (`sudo raspi-config`) e reinicie. O Pi roda o backend localmente, sincroniza com o Railway e abre o player em `http://localhost:8000` em modo kiosk, com autostart no boot.
+
+### Totem Windows (tela de toque)
+
+Pacote ZIP que roda **localmente** no Windows e abre o player em tela cheia no Edge ao ligar. Gere com `python3 scripts/empacotar_totem.py` e siga o **[guia do totem Windows](docs/TOTEM_WINDOWS.md)**.
 
 ### Servidor (Railway)
 
